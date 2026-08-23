@@ -87,4 +87,4 @@ def get_product_enrichment(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Enrichment report for product '{product_id}' not found.",
         )
-    return report.model_dump()
+    return report if isinstance(report, dict) else report.model_dump()

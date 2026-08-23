@@ -134,3 +134,14 @@ class ExportService:
             "summary": summary,
             "sample_rows": sample_rows,
         }
+
+    @staticmethod
+    def preview_export(
+        db: Session,
+        job_id: uuid.UUID,
+        limit: int = 5,
+    ) -> Dict[str, Any]:
+        """
+        Alias for get_export_preview matching the API preview_export signature.
+        """
+        return ExportService.get_export_preview(db=db, job_id=job_id, sample_limit=limit)

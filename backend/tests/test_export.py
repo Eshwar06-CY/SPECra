@@ -158,6 +158,44 @@ class TestExportEngine(unittest.TestCase):
         row = UniHackOutputMapper.map_product_to_row(prod)
         self.assertEqual(set(row.keys()), set(UNIHACK_STATIC_HEADERS))
 
+    def test_preview_export_integration(self):
+        """Test 14: ExportService.preview_export returns correct 252-header structure without crashing"""
+        job = ProcessingJob(
+            id=uuid.uuid4(),
+            filename="sample_test_catalog.csv",
+            file_type="csv",
+            status="completed",
+            total_records=1,
+            processed_records=1,
+            failed_records=0,
+        )
+        self.db.add(job)
+        self.db.flush()
+
+        product = Product(
+            id=uuid.uuid4(),
+            job_id=job.id,
+            product_name="Test Industrial Abrasive",
+            category="Abrasives",
+            raw_data={"PART_NUMBER": "3M-TEST-01", "Part_Desc": "Sanding Disc 50/Pk"},
+        )
+        self.db.add(product)
+        self.db.commit()
+
+        # Call preview_export
+        preview = ExportService.preview_export(db=self.db, job_id=job.id, limit=1)
+
+        self.assertIn("job_id", preview)
+        self.assertEqual(preview["job_id"], str(job.id))
+        self.assertEqual(preview["filename"], "sample_test_catalog.csv")
+        self.assertEqual(preview["total_products"], 1)
+        self.assertEqual(preview["total_headers"], 252)
+        self.assertIn("summary", preview)
+        self.assertIn("sample_rows", preview)
+        self.assertEqual(len(preview["sample_rows"]), 1)
+        self.assertEqual(len(preview["sample_rows"][0]), 252)
+        self.assertEqual(preview["sample_rows"][0]["Product Name"], "Test Industrial Abrasive")
+
 
 if __name__ == "__main__":
     unittest.main()
