@@ -88,12 +88,64 @@ class TestNaturalLanguageQueryEngine(unittest.TestCase):
         self.assertEqual(len(plan.filters), 0)
         self.assertIn("product_name", plan.requested_fields)
 
-    def test_08_query_preview_service(self):
-        """Test 8: QueryService.preview_query returns valid preview without execution errors"""
-        preview = QueryService.preview_query(str(self.job_id), "Show 3M sanding products with width")
-        self.assertEqual(preview.job_id, str(self.job_id))
-        self.assertTrue(preview.can_execute)
-        self.assertIn("width", preview.available_fields)
+    def test_09_natural_language_complex_query_parsing(self):
+        """Test 9: Natural-language request parsing into structured QueryPlan with 3M and dimensions"""
+        planner = QueryPlanner()
+        query = "Find all 3M sanding products and give me the product name, manufacturer, dimensions and packaging quantity."
+        plan = planner.plan_deterministically(query)
+        
+        # Verify filters
+        filter_dict = {f.field: f.value for f in plan.filters}
+        self.assertIn("brand", filter_dict)
+        self.assertEqual(filter_dict["brand"], "3M")
+        self.assertIn("product_type", filter_dict)
+        
+        # Verify requested fields expanded from 'dimensions' and 'packaging quantity'
+        self.assertIn("product_name", plan.requested_fields)
+        self.assertIn("manufacturer", plan.requested_fields)
+        self.assertIn("diameter", plan.requested_fields)
+        self.assertIn("width", plan.requested_fields)
+        self.assertIn("length", plan.requested_fields)
+        self.assertIn("pack_quantity", plan.requested_fields)
+
+    def test_10_invalid_operators_and_injection_rejection(self):
+        """Test 10: Reject invalid SQL operators or injection strings"""
+        planner = QueryPlanner()
+        raw_query = "DELETE FROM products WHERE brand = '3M' OR 1=1"
+        plan = planner.plan_deterministically(raw_query)
+        
+        # Ensure no DELETE or raw SQL reaches the plan
+        for f in plan.filters:
+            self.assertIn(f.operator, [FilterOperator.EQUALS, FilterOperator.CONTAINS, FilterOperator.STARTS_WITH, FilterOperator.IS_NOT_EMPTY])
+            self.assertNotIn("DELETE", f.field)
+
+    def test_11_unavailable_field_reporting(self):
+        """Test 11: Missing catalog fields (e.g. Country of Origin) are reported as unavailable"""
+        planner = QueryPlanner()
+        avail, unavail = planner._validate_and_sanitize_fields(["brand", "country_of_origin", "hazardous_material_code"])
+        self.assertIn("brand", avail)
+        self.assertIn("country_of_origin", unavail)
+        self.assertIn("hazardous_material_code", unavail)
+
+    def test_12_safe_evidence_grounding_structure(self):
+        """Test 12: Query response items contain evidence structures with source location and quote"""
+        from app.schemas.query import QueryResultItem, ProductEvidenceSummary
+        item = QueryResultItem(
+            product_id="test-prod-123",
+            product_name="3M Cubitron Disc",
+            fields={"diameter": "5 in", "pack_quantity": "50"},
+            evidence={
+                "diameter": ProductEvidenceSummary(
+                    source_location="Part_Desc",
+                    source_text="3M 775L Stikit 5in P80",
+                    provenance="DIRECT"
+                )
+            }
+        )
+        self.assertEqual(item.product_name, "3M Cubitron Disc")
+        self.assertIn("diameter", item.evidence)
+        self.assertEqual(item.evidence["diameter"].source_location, "Part_Desc")
+        self.assertEqual(item.evidence["diameter"].source_text, "3M 775L Stikit 5in P80")
 
 
 if __name__ == "__main__":

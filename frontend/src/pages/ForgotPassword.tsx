@@ -1,16 +1,28 @@
 import React, { useState } from 'react';
-import { ArrowRight, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Mail, ArrowLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SpecraLogo } from '../components/ui/SpecraLogo';
+import { api } from '../api/client';
 
 export const ForgotPassword: React.FC = () => {
   const { setActiveTab } = useApp();
   const [email, setEmail] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/api/v1/auth/forgot-password', { email });
+      setSubmitted(true);
+    } catch (err: any) {
+      setError(err?.response?.data?.detail || 'Unable to request password reset. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,6 +60,13 @@ export const ForgotPassword: React.FC = () => {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300">Work Email</label>
                 <div className="relative">
@@ -65,9 +84,10 @@ export const ForgotPassword: React.FC = () => {
 
               <button
                 type="submit"
+                disabled={loading}
                 className="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer mt-2"
               >
-                <span>Send instructions</span>
+                <span>{loading ? 'Sending...' : 'Send instructions'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </form>

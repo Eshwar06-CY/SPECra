@@ -26,6 +26,8 @@ export const apiClient = axios.create({
   },
 });
 
+export const api = apiClient;
+
 // Interceptor to attach Authorization Bearer header from localStorage session token if present
 apiClient.interceptors.request.use((config) => {
   try {

@@ -1,0 +1,45 @@
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/ai/query_planner.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/api/auth.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/api/query.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/core/config.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/core/security.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/main.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/models/user.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/schemas/auth.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/auth_service.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/enrichment_engine.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/app/services/export_engine.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_auth.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_enrichment.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_export.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/tests/test_query_engine.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/api/client.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/context/AppContext.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/ForgotPassword.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/Profile.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/Requirements.tsx', LF will be replaced by CRLF the next time Git touches it
+ README.md                                 |  13 [32m+[m[31m-[m
+ backend/app/ai/query_planner.py           |   2 [32m+[m
+ backend/app/api/auth.py                   | 185 [32m++++++++++[m[31m-[m
+ backend/app/api/query.py                  |  51 [32m++[m[31m-[m
+ backend/app/core/config.py                |   2 [32m+[m
+ backend/app/core/security.py              |  20 [32m++[m
+ backend/app/main.py                       |  14 [32m+[m
+ backend/app/models/user.py                |   7 [32m+[m[31m-[m
+ backend/app/schemas/auth.py               |  31 [32m++[m
+ backend/app/services/auth_service.py      | 223 [32m+++++++++++++[m
+ backend/app/services/enrichment_engine.py | 531 [32m+++++++++++++++++++++++[m[31m-------[m
+ backend/app/services/export_engine.py     | 142 [32m+++++++[m[31m-[m
+ backend/tests/test_auth.py                | 300 [32m+++++++++++++++++[m
+ backend/tests/test_enrichment.py          |   2 [32m+[m[31m-[m
+ backend/tests/test_export.py              | 123 [32m+++++++[m
+ backend/tests/test_query_engine.py        |  64 [32m+++[m[31m-[m
+ frontend/src/App.tsx                      |   8 [32m+[m
+ frontend/src/api/client.ts                |   2 [32m+[m
+ frontend/src/context/AppContext.tsx       |  11 [32m+[m
+ frontend/src/pages/ForgotPassword.tsx     |  28 [32m+[m[31m-[m
+ frontend/src/pages/Profile.tsx            | 368 [32m++++++++++++++++++[m[31m---[m
+ frontend/src/pages/Requirements.tsx       | 293 [32m++++++++[m[31m---------[m
+ 22 files changed, 2070 insertions(+), 350 deletions(-)

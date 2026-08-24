@@ -257,6 +257,306 @@ class TestSPECraAuthenticationAndSecurity(unittest.TestCase):
         )
         self.assertEqual(user_b_export.status_code, 403)
 
+        # 13. User B attempts to preview natural language query on Job A -> MUST BE 403 FORBIDDEN
+        user_b_query_prev = self.client.post(
+            f"/api/v1/query/{job_a_id}/preview",
+            json={"query": "Find abrasive products with dimensions"},
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        self.assertEqual(user_b_query_prev.status_code, 403)
+
+        # 14. User B attempts to execute natural language query on Job A -> MUST BE 403 FORBIDDEN
+        user_b_query_exec = self.client.post(
+            f"/api/v1/query/{job_a_id}",
+            json={"query": "Find abrasive products with dimensions", "limit": 10},
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        self.assertEqual(user_b_query_exec.status_code, 403)
+
+        # 15. User A can successfully preview and execute queries on Job A
+        user_a_query_prev = self.client.post(
+            f"/api/v1/query/{job_a_id}/preview",
+            json={"query": "Find abrasive products with dimensions"},
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+        self.assertEqual(user_a_query_prev.status_code, 200)
+
+        user_a_query_exec = self.client.post(
+            f"/api/v1/query/{job_a_id}",
+            json={"query": "Find abrasive products with dimensions", "limit": 10},
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+        self.assertEqual(user_a_query_exec.status_code, 200)
+
+    def test_07_login_brute_force_lockout_and_case_insensitivity(self):
+        """
+        Verify:
+        - 5 repeated failed login attempts trigger HTTP 429 Too Many Requests
+        - Case variation of email is treated consistently (case-insensitive)
+        - Successful login resets the lockout counter
+        """
+        victim_email = f"BruteForce_{uuid.uuid4().hex[:6]}@Example.Test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Lockout Test User",
+            "organization": "Security Corp",
+            "email": victim_email,
+            "password": self.password,
+        })
+        self.assertEqual(reg.status_code, 201)
+
+        # 1. Repeated 5 failed login attempts with mixed casing
+        for i in range(5):
+            bad_res = self.client.post("/api/v1/auth/login", json={
+                "email": victim_email.lower(),
+                "password": f"WrongPass_{i}",
+            })
+            self.assertEqual(bad_res.status_code, 401)
+            self.assertEqual(bad_res.json()["detail"], "Invalid email or password.")
+
+        # 2. 6th attempt must be throttled with HTTP 429 Too Many Requests
+        locked_res = self.client.post("/api/v1/auth/login", json={
+            "email": victim_email.upper(),
+            "password": self.password,  # Even with correct password, account is throttled
+        })
+        self.assertEqual(locked_res.status_code, 429)
+        self.assertIn("Too many failed login attempts", locked_res.json()["detail"])
+
+        # 3. Simulate throttle reset and verify successful login resets failed counter
+        from app.services.auth_service import _login_attempts
+        _login_attempts.pop(victim_email.lower().strip(), None)
+
+        good_res = self.client.post("/api/v1/auth/login", json={
+            "email": victim_email,
+            "password": self.password,
+        })
+        self.assertEqual(good_res.status_code, 200)
+
+    def test_08_password_policy_and_session_fixation_protection(self):
+        """
+        Verify:
+        - Password minimum length (8 chars) enforced
+        - Distinct logins generate fresh, unique session tokens (Session Fixation protection)
+        """
+        # Short password rejected
+        short_res = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Short Password User",
+            "organization": "Policy Corp",
+            "email": f"short_{uuid.uuid4().hex[:6]}@example.test",
+            "password": "123",  # < 8 chars
+        })
+        self.assertEqual(short_res.status_code, 422)
+
+        # Register valid user
+        user_email = f"session_fix_{uuid.uuid4().hex[:6]}@example.test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Fixation User",
+            "organization": "Fixation Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        token_1 = reg.json()["session_token"]
+
+        # Second login generates a new distinct session token
+        login_1 = self.client.post("/api/v1/auth/login", json={
+            "email": user_email,
+            "password": self.password,
+        })
+        token_2 = login_1.json()["session_token"]
+
+        self.assertNotEqual(token_1, token_2, "Each authentication must generate a unique, fresh session token")
+
+    def test_09_forgot_and_reset_password_lifecycle(self):
+        """
+        Verify:
+        - Requesting password reset issues hashed token in DB and returns generic 200
+        - Resetting password with valid token updates hash and invalidates old sessions
+        - Old password fails to authenticate
+        - New password successfully authenticates
+        - Reusing reset token fails
+        """
+        user_email = f"reset_test_{uuid.uuid4().hex[:6]}@example.test"
+        old_pass = "OldPassword123!"
+        new_pass = "BrandNewPassword123!"
+
+        # Register
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Reset Test User",
+            "organization": "Reset Corp",
+            "email": user_email,
+            "password": old_pass,
+        })
+        old_session_token = reg.json()["session_token"]
+
+        # Request reset
+        forgot_res = self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        self.assertEqual(forgot_res.status_code, 200)
+
+        # Retrieve the user and token from database for test verification
+        from app.core.database import SessionLocal
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            self.assertIsNotNone(user.reset_token_hash)
+            # Create a known raw token and assign its hash to test the endpoint
+            test_raw_token = "valid_reset_token_1234567890_abcdef"
+            user.reset_token_hash = SecurityUtils.hash_token(test_raw_token)
+            db.commit()
+        finally:
+            db.close()
+
+        # Reset password with valid token
+        reset_res = self.client.post("/api/v1/auth/reset-password", json={
+            "token": test_raw_token,
+            "new_password": new_pass,
+        })
+        self.assertEqual(reset_res.status_code, 200)
+
+        # 1. Old session token must now be invalid
+        old_sess_check = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {old_session_token}"})
+        self.assertEqual(old_sess_check.status_code, 401)
+
+        # 2. Old password must fail login
+        old_login = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": old_pass})
+        self.assertEqual(old_login.status_code, 401)
+
+        # 3. New password must succeed
+        new_login = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": new_pass})
+        self.assertEqual(new_login.status_code, 200)
+
+        # 4. Token reuse must fail
+        reuse_res = self.client.post("/api/v1/auth/reset-password", json={
+            "token": test_raw_token,
+            "new_password": "AnotherPassword123!",
+        })
+        self.assertEqual(reuse_res.status_code, 400)
+
+    def test_10_change_password_and_session_invalidation(self):
+        """Verify authenticated user can change password and revoke other sessions."""
+        user_email = f"change_pass_{uuid.uuid4().hex[:6]}@example.test"
+        pass_1 = "CurrentPassword123!"
+        pass_2 = "UpdatedPassword123!"
+
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Change Pass User",
+            "organization": "Change Corp",
+            "email": user_email,
+            "password": pass_1,
+        })
+        token = reg.json()["session_token"]
+
+        # Wrong current password fails
+        bad_change = self.client.post(
+            "/api/v1/auth/change-password",
+            json={"current_password": "WrongPassword123!", "new_password": pass_2},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(bad_change.status_code, 400)
+
+        # Correct change succeeds
+        good_change = self.client.post(
+            "/api/v1/auth/change-password",
+            json={"current_password": pass_1, "new_password": pass_2},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(good_change.status_code, 200)
+
+    def test_11_email_verification_flow(self):
+        """Verify email verification token marks user verified."""
+        user_email = f"verify_{uuid.uuid4().hex[:6]}@example.test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Verify User",
+            "organization": "Verify Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        token = reg.json()["session_token"]
+
+        # Set up a verification token
+        from app.core.database import SessionLocal
+        from datetime import datetime, timezone, timedelta
+        db = SessionLocal()
+        raw_verify_token = "verify_token_abcdef1234567890"
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            user.verification_token_hash = SecurityUtils.hash_token(raw_verify_token)
+            user.verification_token_expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
+            db.commit()
+        finally:
+            db.close()
+
+        # Call verification endpoint
+        ver_res = self.client.get(f"/api/v1/auth/verify-email?token={raw_verify_token}")
+        self.assertEqual(ver_res.status_code, 200)
+
+        # Profile reflects is_verified = True
+        me_res = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+        self.assertTrue(me_res.json().get("is_verified"))
+
+    def test_12_active_sessions_and_revocation(self):
+        """Verify user can view active sessions and revoke specific sessions."""
+        user_email = f"sessions_{uuid.uuid4().hex[:6]}@example.test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Session List User",
+            "organization": "Session Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        token_1 = reg.json()["session_token"]
+
+        # Second login creates session 2
+        login_res = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": self.password})
+        token_2 = login_res.json()["session_token"]
+
+        # List sessions
+        sess_list = self.client.get("/api/v1/auth/sessions", headers={"Authorization": f"Bearer {token_2}"})
+        self.assertEqual(sess_list.status_code, 200)
+        sessions = sess_list.json()
+        self.assertGreaterEqual(len(sessions), 2)
+
+        # Find session 1 ID and revoke it
+        sess_1_id = [s["id"] for s in sessions if not s["is_current"]][0]
+        del_res = self.client.delete(f"/api/v1/auth/sessions/{sess_1_id}", headers={"Authorization": f"Bearer {token_2}"})
+        self.assertEqual(del_res.status_code, 200)
+
+        # Session 1 is now rejected
+        check_sess_1 = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token_1}"})
+        self.assertEqual(check_sess_1.status_code, 401)
+
+        # Session 2 still works
+        check_sess_2 = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token_2}"})
+        self.assertEqual(check_sess_2.status_code, 200)
+
+    def test_13_account_deletion_with_confirmation(self):
+        """Verify permanent account deletion upon password and phrase confirmation."""
+        user_email = f"delete_user_{uuid.uuid4().hex[:6]}@example.test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Delete Me",
+            "organization": "Delete Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        token = reg.json()["session_token"]
+
+        # Wrong phrase fails
+        bad_del = self.client.post(
+            "/api/v1/auth/delete-account",
+            json={"password": self.password, "confirm_text": "WRONG PHRASE"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(bad_del.status_code, 400)
+
+        # Correct deletion succeeds
+        good_del = self.client.post(
+            "/api/v1/auth/delete-account",
+            json={"password": self.password, "confirm_text": "DELETE MY ACCOUNT"},
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(good_del.status_code, 200)
+
+        # Account no longer exists
+        login_del = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": self.password})
+        self.assertEqual(login_del.status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

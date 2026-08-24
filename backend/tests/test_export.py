@@ -196,6 +196,129 @@ class TestExportEngine(unittest.TestCase):
         self.assertEqual(len(preview["sample_rows"][0]), 252)
         self.assertEqual(preview["sample_rows"][0]["Product Name"], "Test Industrial Abrasive")
 
+    def test_15_deterministic_manufacturer_normalization(self):
+        """Test 15: Normalizes 'Freud Inc (2435)' -> 'Freud Inc' without losing company names"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "DCB518", "Part_Manuf": "Freud Inc (2435)"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["MANUFACTURER_NAME"], "Freud Inc")
+        self.assertEqual(row["Part_Manuf"], "Freud Inc (2435)")
+
+    def test_16_deterministic_packaging_extraction(self):
+        """Test 16: Extracts '50 Disc/Box' -> 50 / disc / 50 pieces per box"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "3M775L", "Part_Desc": "3M 775L Stikit Film P80 - Cubitron II 50 Disc/Box"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["Selling Qty"], "50")
+        self.assertEqual(row["Selling UOM"], "disc")
+        self.assertEqual(row["Standard Packaging Information"], "50 pieces per box")
+
+    def test_17_deterministic_dimensions_extraction(self):
+        """Test 17: Extracts '1/2\"x18\"' -> width 0.5 in / length 18 in"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "DCB518", "Part_Desc": "Diablo 1/2\"x18\" - Sanding Belt 6pc"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["WIDTH"], "0.5")
+        self.assertEqual(row["WIDTH_UOM"], "in")
+        self.assertEqual(row["LENGTH"], "18")
+        self.assertEqual(row["LENGTH_UOM"], "in")
+        self.assertEqual(row["Selling Qty"], "6")
+        self.assertEqual(row["Class"], "Sanding Belt")
+
+    def test_18_deterministic_brand_and_grit(self):
+        """Test 18: Extracts Brand '3M' and Grit 'P80' into dynamic slot 1"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "3M775L", "Part_Desc": "3M 775L Stikit Film P80 - Cubitron II 50 Disc/Box"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["BRAND_NAME"], "3M")
+        self.assertEqual(row["ATTRIBUTE_LABEL 1"], "Grit Size")
+        self.assertEqual(row["ATTRIBUTE_VALUE 1"], "80")
+        self.assertEqual(row["ATTRIBUTE_UOM 1"], "Grit")
+
+    def test_20_precision_three_axis_cut_off_disc(self):
+        """TEST 4: '49-94-0013 Milw 5\"x.045\"x7/8\" Metal Cut Off Disc' -> Diameter=5, Thickness=0.045, Arbor=7/8, Width=blank"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "49-94-0013", "Part_Desc": "49-94-0013 Milw 5\"x.045\"x7/8\" Metal Cut Off Disc"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["WIDTH"], "")
+        self.assertEqual(row["LENGTH"], "")
+        self.assertEqual(row["ATTRIBUTE_LABEL 1"], "Diameter")
+        self.assertEqual(row["ATTRIBUTE_VALUE 1"], "5")
+        self.assertEqual(row["ATTRIBUTE_UOM 1"], "in")
+        self.assertEqual(row["ATTRIBUTE_LABEL 2"], "Thickness")
+        self.assertEqual(row["ATTRIBUTE_VALUE 2"], "0.045")
+        self.assertEqual(row["ATTRIBUTE_UOM 2"], "in")
+        self.assertEqual(row["ATTRIBUTE_LABEL 3"], "Arbor Hole Size")
+        self.assertEqual(row["ATTRIBUTE_VALUE 3"], "7/8")
+        self.assertEqual(row["ATTRIBUTE_UOM 3"], "in")
+
+    def test_21_precision_three_axis_4inch_cutoff(self):
+        """TEST 5: '4\"x.040\"x5/8\" Cut Off Disc' -> Diameter=4, Thickness=0.04, Arbor=5/8"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "49-94-0001", "Part_Desc": "4\"x.040\"x5/8\" Cut Off Disc"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["WIDTH"], "")
+        self.assertEqual(row["LENGTH"], "")
+        self.assertEqual(row["ATTRIBUTE_LABEL 1"], "Diameter")
+        self.assertEqual(row["ATTRIBUTE_VALUE 1"], "4")
+        self.assertEqual(row["ATTRIBUTE_LABEL 2"], "Thickness")
+        self.assertEqual(row["ATTRIBUTE_VALUE 2"], "0.04")
+        self.assertEqual(row["ATTRIBUTE_LABEL 3"], "Arbor Hole Size")
+        self.assertEqual(row["ATTRIBUTE_VALUE 3"], "5/8")
+
+    def test_22_precision_circular_disc_diameter(self):
+        """TEST 3: 'HIOLIT 5\" P80' -> Diameter=5, Grit Size=80, WIDTH=blank, LENGTH=blank"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "5B-332-080", "Part_Desc": "5B-332-080 HIOLIT 5\" P80"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["WIDTH"], "")
+        self.assertEqual(row["LENGTH"], "")
+        # Should have Grit Size and Diameter in dynamic slots
+        labels = [row.get(f"ATTRIBUTE_LABEL {s}") for s in range(1, 5)]
+        self.assertIn("Grit Size", labels)
+        self.assertIn("Diameter", labels)
+        self.assertEqual(row["ATTRIBUTE_VALUE 1"], "5")
+        self.assertEqual(row["ATTRIBUTE_VALUE 2"], "80")
+
+    def test_23_precision_rectangular_belt(self):
+        """TEST 2: '2.75x30 Sanding Belt' -> WIDTH=2.75, LENGTH=30"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "9A-570-240", "Part_Desc": "9A-570-240 Abranet 2.75x30 Sanding Belt"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["WIDTH"], "2.75")
+        self.assertEqual(row["WIDTH_UOM"], "in")
+        self.assertEqual(row["LENGTH"], "30")
+        self.assertEqual(row["LENGTH_UOM"], "in")
+
+    def test_24_precision_sheets_packaging(self):
+        """TEST 6: '9A-129-120 Abranet 3x4 - 50 Sheets/Box' -> Selling Qty=50, Selling UOM=sheets, Packaging='50 sheets per box'"""
+        prod = Product(
+            id=uuid.uuid4(),
+            raw_data={"Mfg_Part_Num": "9A-129-120", "Part_Desc": "9A-129-120 Abranet 3x4 - 50 Sheets/Box"}
+        )
+        row = UniHackOutputMapper.map_product_to_row(prod)
+        self.assertEqual(row["Selling Qty"], "50")
+        self.assertEqual(row["Selling UOM"], "sheets")
+        self.assertEqual(row["Standard Packaging Information"], "50 sheets per box")
+        self.assertEqual(row["WIDTH"], "3")
+        self.assertEqual(row["LENGTH"], "4")
+
 
 if __name__ == "__main__":
     unittest.main()

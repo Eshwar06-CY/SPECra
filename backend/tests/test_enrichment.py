@@ -215,7 +215,7 @@ class TestEnrichmentEngine(unittest.TestCase):
         self.assertEqual(len(report.conflicts), 1)
         self.assertEqual(report.conflicts[0].field, "BRAND_NAME")
         self.assertIn("Milwaukee", report.conflicts[0].candidate_values)
-        self.assertIn("Dewalt", report.conflicts[0].candidate_values)
+        self.assertIn("DeWalt", report.conflicts[0].candidate_values)
 
 
 if __name__ == "__main__":

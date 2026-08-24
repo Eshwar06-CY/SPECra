@@ -5,6 +5,8 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
+import { VerifyEmail } from './pages/VerifyEmail';
 import { Dashboard } from './pages/Dashboard';
 import { Upload } from './pages/Upload';
 import { Understand } from './pages/Understand';
@@ -32,6 +34,12 @@ export function App() {
   }
   if (activeTab === 'forgot-password') {
     return <ForgotPassword />;
+  }
+  if (activeTab === 'reset-password') {
+    return <ResetPassword />;
+  }
+  if (activeTab === 'verify-email') {
+    return <VerifyEmail />;
   }
 
   const getPageMeta = () => {

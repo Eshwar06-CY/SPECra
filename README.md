@@ -187,9 +187,16 @@ deadlock/
 | Domain | Method | Endpoint | Purpose |
 | :--- | :--- | :--- | :--- |
 | **Auth** | `POST` | `/api/v1/auth/register` | Register new user account and provision default workspace |
-| **Auth** | `POST` | `/api/v1/auth/login` | Authenticate credentials and establish active session |
+| **Auth** | `POST` | `/api/v1/auth/login` | Authenticate credentials, reset rate limiting, issue fresh session |
 | **Auth** | `GET` | `/api/v1/auth/me` | Retrieve authenticated user profile and workspace info |
 | **Auth** | `POST` | `/api/v1/auth/logout` | Revoke active server-side session |
+| **Auth** | `POST` | `/api/v1/auth/forgot-password` | Request single-use hashed password reset token via email |
+| **Auth** | `POST` | `/api/v1/auth/reset-password` | Reset password using valid token and invalidate prior sessions |
+| **Auth** | `POST` | `/api/v1/auth/change-password` | Update passphrase and revoke other active login sessions |
+| **Auth** | `GET` | `/api/v1/auth/verify-email` | Verify account email address with single-use token |
+| **Auth** | `GET` | `/api/v1/auth/sessions` | Inspect active login sessions for authenticated user |
+| **Auth** | `DELETE` | `/api/v1/auth/sessions/{id}` | Revoke specific active session |
+| **Auth** | `POST` | `/api/v1/auth/delete-account` | Permanently delete account and cascading workspace data |
 | **Ingestion** | `POST` | `/api/v1/ingestion/upload` | Upload CSV/XLSX catalog file and trigger schema analysis |
 | **Ingestion** | `GET` | `/api/v1/ingestion/jobs` | List processing jobs belonging to authenticated workspace |
 | **Ingestion** | `GET` | `/api/v1/ingestion/{job_id}` | Retrieve job processing status and statistics |
@@ -274,13 +281,13 @@ npm run dev
 
 ## 10. Automated Testing
 
-### Backend Test Suite (77 Tests)
+### Backend Test Suite (107 Tests)
 ```powershell
 cd D:\Antigravity_Projects\deadlock\backend
 ..\venv\Scripts\Activate.ps1
 python -m unittest discover -s tests
 ```
-*Executes unit tests, database integrations, Gemini AI abstractions, deterministic enrichment rules, multi-tenant IDOR security checks, and 252-column export verifications.*
+*Executes unit tests, database integrations, Gemini AI abstractions, deterministic enrichment rules, multi-tenant IDOR security checks, password resets, session management, email verification, path traversal defenses, spreadsheet formula injection sanitization, HTTP security headers, natural-language query planning, and 252-column export verifications.*
 
 ### Frontend Production Build
 ```powershell

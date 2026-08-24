@@ -32,6 +32,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const [activeTab, setActiveTabState] = useState<string>(getInitialTab);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#/', '').replace('#', '').split('?')[0];
+      if (hash) {
+        setActiveTabState(hash);
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   const [selectedJobId, setSelectedJobIdState] = useState<string | null>(() => {
     try {
       return localStorage.getItem('specra_selected_job_id');

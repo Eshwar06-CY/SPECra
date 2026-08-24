@@ -25,6 +25,8 @@ class Settings(BaseSettings):
     COOKIE_NAME: str = "specra_session"
     COOKIE_SECURE: bool = False  # Set to True in production HTTPS
     COOKIE_SAMESITE: str = "lax"
+    MAX_LOGIN_ATTEMPTS: int = 5  # Lock out after 5 consecutive failed attempts
+    LOGIN_LOCKOUT_SECONDS: int = 300  # 5 minutes lockout duration
 
     # Database Configuration
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/deadlock"

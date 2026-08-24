@@ -1,73 +1,64 @@
 import React, { useState } from 'react';
 import {
   Sparkles,
-  ArrowRight,
   CheckCircle2,
   Edit3,
   Check,
-  SlidersHorizontal,
+  AlertTriangle,
+  HelpCircle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { previewProductQuery, type QueryPreviewResponse } from '../api/query';
-import { formatErrorMessage } from '../api/client';
 import { WorkflowProgress } from '../components/layout/WorkflowProgress';
-
-export type CatalogMode = 'standard' | 'focused' | 'custom';
 
 export const Requirements: React.FC = () => {
   const { selectedJobId, setActiveTab, setActiveQuery } = useApp();
-  const [selectedMode, setSelectedMode] = useState<CatalogMode>('standard');
   const [customPrompt, setCustomPrompt] = useState<string>(
-    'Find the brand, manufacturer, product type, dimensions and packaging quantity for all sanding products.'
+    'Find all 3M sanding products and give me the product name, manufacturer, dimensions and packaging quantity.'
   );
-  const [selectedChips, setSelectedChips] = useState<string[]>([
-    'Brand',
-    'Manufacturer',
-    'Product type',
-    'Dimensions',
-    'Packaging',
-  ]);
   const [previewData, setPreviewData] = useState<QueryPreviewResponse | null>(null);
   const [previewing, setPreviewing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const requirementChips = [
-    'Brand',
-    'Manufacturer',
-    'Product type',
-    'Dimensions',
-    'Weight',
-    'Packaging',
-    'Part number',
-    'Specifications',
-    'Compliance',
-    'Product descriptions',
+  const examplePrompts = [
+    'Find all products from 3M',
+    'Show sanding products with their dimensions',
+    'Find products sold in packs of 50',
+    'Give me manufacturer, brand and MPN for all products',
   ];
 
-  const handleToggleChip = (chip: string) => {
-    if (selectedChips.includes(chip)) {
-      setSelectedChips(selectedChips.filter((c) => c !== chip));
-    } else {
-      setSelectedChips([...selectedChips, chip]);
-    }
+  const handleApplyExample = (prompt: string) => {
+    setCustomPrompt(prompt);
+    setPreviewData(null);
+    setErrorMessage(null);
   };
 
-  const handlePreviewPlan = async () => {
-    if (!selectedJobId || !customPrompt.trim()) return;
+  const handleUnderstandRequest = async () => {
+    if (!selectedJobId) {
+      setErrorMessage('Please upload or select a catalog first.');
+      return;
+    }
+    if (!customPrompt.trim()) {
+      setErrorMessage('Please describe the products and information you need.');
+      return;
+    }
+
     setPreviewing(true);
     setErrorMessage(null);
     try {
       const res = await previewProductQuery(selectedJobId, customPrompt.trim());
       setPreviewData(res);
     } catch (err: any) {
-      setErrorMessage(formatErrorMessage(err));
+      setErrorMessage(
+        "We couldn't understand that request. Try describing the products and information you need."
+      );
     } finally {
       setPreviewing(false);
     }
   };
 
-  const handleStartAnalysis = () => {
-    if (selectedMode !== 'standard' && customPrompt.trim()) {
+  const handleConfirmAndRunAnalysis = () => {
+    if (customPrompt.trim()) {
       setActiveQuery(customPrompt.trim());
     } else {
       setActiveQuery(null);
@@ -76,29 +67,29 @@ export const Requirements: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
       {/* Workflow Stepper */}
       <WorkflowProgress currentTab="requirements" completedTabs={['upload', 'understand']} />
 
-      {/* Main Container Card */}
+      {/* Main Requirement Card */}
       <div className="specra-panel rounded-3xl p-8 border border-slate-800 space-y-8">
         <div>
           <h2 className="text-2xl font-bold text-white tracking-tight">
-            What would you like SPECra to find?
+            Tell SPECra what you need
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Describe the information you need in natural language or select from domain specifications.
+            Describe the products and information you're looking for in plain language.
           </p>
         </div>
 
-        {/* Natural Language Prompt Box */}
+        {/* Input Box */}
         <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span>Describe what SPECra should extract</span>
+              <span>Natural Language Request</span>
             </label>
-            <span className="text-[11px] text-slate-400 font-mono">SPECra Natural Intelligence</span>
+            <span className="text-[11px] text-cyan-400/80 font-mono">AI Query Planner</span>
           </div>
 
           <div className="relative">
@@ -109,172 +100,158 @@ export const Requirements: React.FC = () => {
                 setCustomPrompt(e.target.value);
                 setPreviewData(null);
               }}
-              placeholder="Example: Find the brand, manufacturer, product type, dimensions and packaging quantity for all sanding products."
-              className="specra-input w-full px-4 py-3 rounded-xl text-xs text-white placeholder:text-slate-500 resize-none"
+              placeholder="Find all 3M sanding products and show me the product name, manufacturer, brand, dimensions and packaging quantity."
+              className="specra-input w-full px-4 py-3 rounded-xl text-xs text-white placeholder:text-slate-500 resize-none font-sans"
             />
           </div>
 
-          {/* Suggested Requirement Chips */}
+          {/* Example Prompts */}
           <div className="space-y-2 pt-1">
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">
-              Suggested specifications & requirements:
+            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider flex items-center gap-1.5">
+              <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
+              <span>Try one of these examples:</span>
             </span>
             <div className="flex flex-wrap gap-2">
-              {requirementChips.map((chip) => {
-                const isSelected = selectedChips.includes(chip);
-                return (
-                  <button
-                    key={chip}
-                    onClick={() => handleToggleChip(chip)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 cursor-pointer ${
-                      isSelected
-                        ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 shadow-sm shadow-cyan-500/10'
-                        : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                    <span>{chip}</span>
-                  </button>
-                );
-              })}
+              {examplePrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => handleApplyExample(prompt)}
+                  className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-950/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition-all cursor-pointer text-left"
+                >
+                  "{prompt}"
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Mode Selection */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div
-              onClick={() => setSelectedMode('standard')}
-              className={`p-4 rounded-xl border cursor-pointer transition-all space-y-1 ${
-                selectedMode === 'standard'
-                  ? 'bg-cyan-950/20 border-cyan-500 text-white'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
-              }`}
-            >
-              <div className="text-xs font-bold flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                <span>Analyze the entire catalog</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Process and standardize every item in the uploaded file.
-              </p>
+          {/* Understand Request Button */}
+          {!previewData && (
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={handleUnderstandRequest}
+                disabled={previewing || !customPrompt.trim()}
+                className="px-6 py-3 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-cyan-500/20 cursor-pointer"
+              >
+                {previewing ? (
+                  <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Sparkles className="w-3.5 h-3.5" />
+                )}
+                <span>Understand Request</span>
+              </button>
             </div>
-
-            <div
-              onClick={() => setSelectedMode('focused')}
-              className={`p-4 rounded-xl border cursor-pointer transition-all space-y-1 ${
-                selectedMode === 'focused'
-                  ? 'bg-cyan-950/20 border-cyan-500 text-white'
-                  : 'bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700'
-              }`}
-            >
-              <div className="text-xs font-bold flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-indigo-400" />
-                <span>Focus on specific products</span>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Target queries filtered by brand or product category.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              onClick={handlePreviewPlan}
-              disabled={previewing || !customPrompt.trim()}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-slate-950 transition-all disabled:opacity-50 flex items-center gap-2 shadow-md shadow-indigo-500/20 cursor-pointer"
-            >
-              {previewing ? (
-                <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              <span>Interpret Request with SPECra</span>
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* Structured Interpretation Box */}
+        {/* Human Confirmation / Review Interpretation Card */}
         {previewData && (
-          <div className="p-6 rounded-2xl bg-cyan-950/20 border border-cyan-500/40 space-y-4 animate-fadeIn">
+          <div className="p-6 rounded-2xl bg-cyan-950/20 border border-cyan-500/40 space-y-5 animate-fadeIn">
             <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3">
-              <h4 className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-2">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-cyan-400" />
-                <span>You've asked SPECra to find:</span>
+                <span>Here's what I understood</span>
               </h4>
               <button
                 onClick={() => setPreviewData(null)}
-                className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1"
+                className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 cursor-pointer"
               >
-                <Edit3 className="w-3 h-3" />
-                <span>Edit request</span>
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>Edit Request</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-              <div className="space-y-2 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Product Scope:</span>
+              {/* Filtered Products / Scope */}
+              <div className="space-y-2 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Targeted Products:
+                </span>
                 {previewData.query_plan.filters.length > 0 ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {previewData.query_plan.filters.map((f, idx) => (
                       <div key={idx} className="flex items-center gap-2 text-slate-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                        <span className="font-mono text-cyan-300 capitalize">{f.field.replace(/_/g, ' ')}:</span>
-                        <strong>"{f.value}"</strong>
+                        <span className="text-slate-400 capitalize">{f.field.replace(/_/g, ' ')} &rarr;</span>
+                        <strong className="text-cyan-300 font-semibold">{f.value}</strong>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-slate-300 font-medium">All products in catalog</div>
+                  <div className="text-slate-300 font-medium flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                    <span>All products in uploaded catalog</span>
+                  </div>
                 )}
               </div>
 
-              <div className="space-y-2 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Extracted Information:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {previewData.available_fields.map((f) => (
-                    <span
-                      key={f}
-                      className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[11px] font-semibold flex items-center gap-1"
-                    >
-                      <Check className="w-3 h-3 text-emerald-400" />
+              {/* Information You'll Receive */}
+              <div className="space-y-2 p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Information you'll receive:
+                </span>
+                <div className="space-y-1.5">
+                  {['Product Name', 'Manufacturer', 'Brand', ...previewData.available_fields.filter(f => !['product_name', 'manufacturer', 'brand'].includes(f))].map((f) => (
+                    <div key={f} className="flex items-center gap-2 text-emerald-300 font-medium">
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                       <span className="capitalize">{f.replace(/_/g, ' ')}</span>
-                    </span>
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
 
+            {/* Unavailable Information Alert */}
             {previewData.unavailable_fields.length > 0 && (
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-                Some requested information isn't available in this catalog schema: {previewData.unavailable_fields.join(', ')}
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs space-y-1">
+                <div className="font-semibold flex items-center gap-1.5 text-amber-300">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Some requested information isn't available in this catalog.</span>
+                </div>
+                <p className="text-slate-300 text-[11px] pl-5">
+                  &bull; {previewData.unavailable_fields.map(f => f.replace(/_/g, ' ')).join(', ')} was not found in the uploaded catalog.
+                </p>
               </div>
             )}
+
+            {/* Confirmation Buttons */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-cyan-500/20">
+              <button
+                type="button"
+                onClick={() => setPreviewData(null)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 border border-slate-800 transition-colors cursor-pointer"
+              >
+                &larr; Edit Request
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmAndRunAnalysis}
+                className="w-full sm:w-auto px-8 py-3 rounded-xl text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Looks Good &mdash; Run Analysis &rarr;</span>
+              </button>
+            </div>
           </div>
         )}
 
         {errorMessage && (
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
+          <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
             {errorMessage}
           </div>
         )}
 
-        {/* Action Controls */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-          <button
-            onClick={() => setActiveTab('understand')}
-            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
-          >
-            ← Back
-          </button>
-
-          <button
-            onClick={handleStartAnalysis}
-            className="px-8 py-3.5 rounded-xl text-sm font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-all shadow-lg shadow-cyan-500/20 flex items-center gap-2 cursor-pointer"
-          >
-            <span>Start analysis</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Back Button */}
+        {!previewData && (
+          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+            <button
+              onClick={() => setActiveTab('understand')}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+            >
+              &larr; Back to Catalog Structure
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

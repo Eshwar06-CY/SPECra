@@ -68,6 +68,26 @@ class SecurityUtils:
         return secrets.token_urlsafe(32)
 
     @staticmethod
+    def hash_token(raw_token: str) -> str:
+        """
+        Generates SHA-256 digest of sensitive tokens (e.g. password-reset, email verification)
+        so that tokens are never stored in plaintext in the database.
+        """
+        if not raw_token:
+            return ""
+        return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def verify_token(raw_token: str, stored_hash: str) -> bool:
+        """
+        Constant-time comparison between raw token and stored SHA-256 digest.
+        """
+        if not raw_token or not stored_hash:
+            return False
+        computed = SecurityUtils.hash_token(raw_token)
+        return hmac.compare_digest(computed, stored_hash)
+
+    @staticmethod
     def normalize_email(email: str) -> str:
         """
         Trims whitespace and lowercases email address for consistent indexing.

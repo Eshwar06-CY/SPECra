@@ -26,6 +26,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    """
+    Inject standard enterprise security headers to protect against clickjacking,
+    MIME-sniffing, and cross-origin referrer leakage.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
+
 # Register API routers
 app.include_router(auth_router, prefix=settings.API_PREFIX)
 app.include_router(database_router, prefix=settings.API_PREFIX)

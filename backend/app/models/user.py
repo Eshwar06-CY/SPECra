@@ -31,6 +31,11 @@ class User(Base):
     organization = Column(String(255), nullable=False, default="Default Organization")
     role = Column(String(64), nullable=False, default="owner")
     is_active = Column(Boolean, nullable=False, default=True)
+    is_verified = Column(Boolean, nullable=False, default=False)
+    reset_token_hash = Column(String(512), nullable=True, index=True)
+    reset_token_expires_at = Column(DateTime(timezone=True), nullable=True)
+    verification_token_hash = Column(String(512), nullable=True, index=True)
+    verification_token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(
@@ -45,7 +50,7 @@ class User(Base):
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<User(id={self.id}, email='{self.email}', organization='{self.organization}')>"
+        return f"<User(id={self.id}, email='{self.email}', organization='{self.organization}', verified={self.is_verified})>"
 
 
 class Workspace(Base):

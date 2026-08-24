@@ -143,6 +143,8 @@ class QueryPlanner:
             filters.append(QueryFilter(field="product_name", operator=FilterOperator.CONTAINS, value=token))
 
         # 5. Check Requested Field Groups
+        if "product name" in q_lower or "name" in q_lower or "title" in q_lower:
+            requested_fields.add("product_name")
         if "dimension" in q_lower:
             requested_fields.update(FIELD_GROUPS["dimensions"])
         if "packaging" in q_lower or "package" in q_lower:
