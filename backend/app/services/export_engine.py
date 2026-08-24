@@ -375,7 +375,7 @@ class UniHackExportEngine:
 
     @classmethod
     def generate_xlsx_bytes(cls, rows: List[Dict[str, str]]) -> bytes:
-        """Serializes mapped product rows into styled Microsoft Excel (XLSX) bytes."""
+        """Serializes mapped product rows into high-performance Microsoft Excel (XLSX) bytes."""
         wb = openpyxl.Workbook()
         ws = wb.active
         ws.title = "UniHack Delivery Output"
@@ -385,36 +385,19 @@ class UniHackExportEngine:
         header_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
         header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
-        data_font = Font(name="Segoe UI", size=9)
-        data_alignment = Alignment(horizontal="left", vertical="center")
-
-        thin_border = Border(
-            left=Side(style="thin", color="E2E8F0"),
-            right=Side(style="thin", color="E2E8F0"),
-            top=Side(style="thin", color="E2E8F0"),
-            bottom=Side(style="thin", color="E2E8F0"),
-        )
-
         # Write header row
         ws.append(UNIHACK_STATIC_HEADERS)
-        header_row = ws[1]
-        for cell in header_row:
+        for cell in ws[1]:
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = header_alignment
 
         ws.row_dimensions[1].height = 28
 
-        # Write data rows with formula sanitization
-        for r_idx, row in enumerate(rows, start=2):
+        # Write data rows in high-performance bulk stream with formula sanitization
+        for row in rows:
             row_values = [sanitize_spreadsheet_cell(row.get(h, "")) for h in UNIHACK_STATIC_HEADERS]
             ws.append(row_values)
-            for c_idx in range(1, len(UNIHACK_STATIC_HEADERS) + 1):
-                cell = ws.cell(row=r_idx, column=c_idx)
-                cell.font = data_font
-                cell.alignment = data_alignment
-                cell.border = thin_border
-            ws.row_dimensions[r_idx].height = 20
 
         # Freeze top header row
         ws.freeze_panes = "A2"

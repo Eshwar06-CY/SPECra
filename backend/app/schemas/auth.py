@@ -27,6 +27,7 @@ class UserProfileResponse(BaseModel):
     email: str
     organization: str
     role: str
+    email_verified: bool = False
     is_verified: bool = False
     workspace_id: uuid.UUID
     workspace_name: str
@@ -40,6 +41,14 @@ class AuthResponse(BaseModel):
     message: str
     user: UserProfileResponse
     session_token: Optional[str] = None  # Returned as fallback for header auth if cookies disabled
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(..., min_length=16, max_length=256)
+
+
+class ResendVerificationRequest(BaseModel):
+    email: str = Field(..., pattern=EMAIL_PATTERN)
 
 
 class ForgotPasswordRequest(BaseModel):

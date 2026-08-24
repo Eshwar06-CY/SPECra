@@ -12,6 +12,8 @@ from app.schemas.auth import (
     UserLoginRequest,
     UserProfileResponse,
     AuthResponse,
+    VerifyEmailRequest,
+    ResendVerificationRequest,
     ForgotPasswordRequest,
     ResetPasswordRequest,
     ChangePasswordRequest,
@@ -91,6 +93,8 @@ def register(
             email=user.email,
             organization=user.organization,
             role=user.role,
+            email_verified=user.email_verified,
+            is_verified=user.is_verified,
             workspace_id=workspace.id,
             workspace_name=workspace.name,
             created_at=user.created_at,
@@ -158,6 +162,7 @@ def get_me(
         email=user.email,
         organization=user.organization,
         role=user.role,
+        email_verified=user.email_verified,
         is_verified=user.is_verified,
         workspace_id=workspace.id,
         workspace_name=workspace.name,
@@ -221,7 +226,58 @@ def reset_password(
     Validates token, updates password hash, clears token, and invalidates all prior sessions.
     """
     AuthService.reset_password(db=db, raw_token=data.token, new_password=data.new_password)
-    return {"message": "Your password has been reset successfully. You can now sign in with your new credentials."}
+@router.post(
+    "/verify-email",
+    status_code=status.HTTP_200_OK,
+    summary="Verify email address with secure token",
+)
+def verify_email_post(
+    data: VerifyEmailRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    PUBLIC endpoint.
+    Verifies user email using single-use cryptographically hashed token.
+    """
+    result = AuthService.verify_email(db=db, raw_token=data.token)
+    return result
+
+
+@router.get(
+    "/verify-email",
+    status_code=status.HTTP_200_OK,
+    summary="Verify email address via query parameter link",
+)
+def verify_email_get(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """
+    PUBLIC endpoint.
+    Browser link click handler for email verification links.
+    """
+    result = AuthService.verify_email(db=db, raw_token=token)
+    return result
+
+
+@router.post(
+    "/resend-verification",
+    status_code=status.HTTP_200_OK,
+    summary="Resend email verification link",
+)
+def resend_verification(
+    data: ResendVerificationRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    PUBLIC endpoint.
+    Issues a new verification token, invalidates previous active tokens,
+    applies rate limiting, and returns a generic response to prevent email enumeration.
+    """
+    AuthService.resend_verification(db=db, email=data.email)
+    return {
+        "message": "If the account requires verification, a new verification email has been sent."
+    }
 
 
 @router.post(

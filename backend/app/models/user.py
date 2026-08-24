@@ -31,6 +31,8 @@ class User(Base):
     organization = Column(String(255), nullable=False, default="Default Organization")
     role = Column(String(64), nullable=False, default="owner")
     is_active = Column(Boolean, nullable=False, default=True)
+    email_verified = Column(Boolean, nullable=False, default=False)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
     is_verified = Column(Boolean, nullable=False, default=False)
     reset_token_hash = Column(String(512), nullable=True, index=True)
     reset_token_expires_at = Column(DateTime(timezone=True), nullable=True)
@@ -48,9 +50,63 @@ class User(Base):
     # Relationships
     workspaces = relationship("Workspace", back_populates="owner", cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+    verification_tokens = relationship("EmailVerificationToken", back_populates="user", cascade="all, delete-orphan")
+    reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<User(id={self.id}, email='{self.email}', organization='{self.organization}', verified={self.is_verified})>"
+        return f"<User(id={self.id}, email='{self.email}', organization='{self.organization}', verified={self.email_verified})>"
+
+
+class EmailVerificationToken(Base):
+    """
+    Cryptographically secure single-use email verification token tracking.
+    Stores SHA-256 token hash, expiration timestamp, and single-use status.
+    """
+    __tablename__ = "email_verification_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash = Column(String(512), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="verification_tokens")
+
+    def __repr__(self):
+        return f"<EmailVerificationToken(id={self.id}, user_id={self.user_id}, used={self.used_at is not None})>"
+
+
+class PasswordResetToken(Base):
+    """
+    Cryptographically secure single-use password reset token tracking.
+    Stores SHA-256 token hash, expiration timestamp, and single-use status.
+    """
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    token_hash = Column(String(512), unique=True, nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    used_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    # Relationships
+    user = relationship("User", back_populates="reset_tokens")
+
+    def __repr__(self):
+        return f"<PasswordResetToken(id={self.id}, user_id={self.user_id}, used={self.used_at is not None})>"
 
 
 class Workspace(Base):

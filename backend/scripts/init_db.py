@@ -29,6 +29,13 @@ def init_db():
         # Create all tables
         print("[*] Creating database tables if they do not exist...")
         Base.metadata.create_all(bind=engine)
+
+        # Apply backward-compatible migrations
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT FALSE;"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMP WITH TIME ZONE;"))
+            conn.execute(text("UPDATE users SET email_verified = TRUE WHERE is_verified = TRUE AND email_verified = FALSE;"))
+            conn.execute(text("UPDATE users SET is_verified = TRUE WHERE email_verified = TRUE AND is_verified = FALSE;"))
         
         table_names = list(Base.metadata.tables.keys())
         print(f"[+] Successfully initialized tables ({len(table_names)}): {', '.join(table_names)}")

@@ -288,14 +288,158 @@ class TestDataFileExportSecurity(unittest.TestCase):
 
     def test_11_security_headers_present(self):
         """
-        Verify that HTTP response headers contain enterprise security defenses.
+        Verify that HTTP response headers contain enterprise security defenses (nosniff, DENY, referrer, permissions, CSP).
         """
         res = self.client.get("/health")
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.headers.get("x-content-type-options"), "nosniff")
         self.assertEqual(res.headers.get("x-frame-options"), "DENY")
         self.assertEqual(res.headers.get("referrer-policy"), "strict-origin-when-cross-origin")
-        self.assertEqual(res.headers.get("x-xss-protection"), "1; mode=block")
+        self.assertIn("geolocation=()", res.headers.get("permissions-policy", ""))
+        self.assertIn("default-src 'self'", res.headers.get("content-security-policy", ""))
+        self.assertIn("frame-ancestors 'none'", res.headers.get("content-security-policy", ""))
+
+    def test_12_hsts_configurable_and_disabled_on_localhost(self):
+        """
+        Verify HSTS is disabled by default in development and properly emitted when enabled.
+        """
+        from app.core.config import settings
+
+        # 1. Default development: No HSTS header
+        settings.ENABLE_HSTS = False
+        res_dev = self.client.get("/health")
+        self.assertIsNone(res_dev.headers.get("strict-transport-security"))
+
+        # 2. Production/Enabled: HSTS header present with max-age
+        try:
+            settings.ENABLE_HSTS = True
+            res_prod = self.client.get("/health")
+            hsts_hdr = res_prod.headers.get("strict-transport-security")
+            self.assertIsNotNone(hsts_hdr)
+            self.assertIn("max-age=31536000", hsts_hdr)
+            self.assertIn("includeSubDomains", hsts_hdr)
+        finally:
+            settings.ENABLE_HSTS = False
+
+    def test_13_oversized_request_body_rejected(self):
+        """
+        Verify that request bodies exceeding the maximum configured threshold (50MB) are rejected with HTTP 413.
+        """
+        # Simulate an oversized payload via Content-Length header
+        res = self.client.post(
+            "/api/v1/ingestion/upload",
+            headers={
+                "Authorization": f"Bearer {self.token_a}",
+                "Content-Length": str(60 * 1024 * 1024),  # 60MB
+            },
+        )
+        self.assertEqual(res.status_code, 413)
+        self.assertIn("Request entity too large", res.json()["detail"])
+
+    def test_14_cors_blocks_unauthorized_external_origins(self):
+        """
+        Verify that unauthorized external CORS origins do not receive Access-Control-Allow-Origin headers.
+        """
+        # 1. Allowed origin
+        allowed_res = self.client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        self.assertEqual(allowed_res.headers.get("access-control-allow-origin"), "http://localhost:5173")
+
+        # 2. Unauthorized origin
+        blocked_res = self.client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://malicious-site.attacker.com",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        self.assertNotEqual(blocked_res.headers.get("access-control-allow-origin"), "https://malicious-site.attacker.com")
+
+    def test_15_error_responses_sanitized_in_production(self):
+        """
+        Verify that in production mode, unhandled internal errors return sanitized generic responses without stack traces.
+        """
+        from app.core.config import settings
+        original_env = settings.ENVIRONMENT
+        try:
+            settings.ENVIRONMENT = "production"
+            # Request an invalid path or trigger error
+            res = self.client.get("/api/v1/ingestion/invalid-uuid-format-fail/records")
+            # Must return 400 or 422 or sanitized 500 without Python traceback
+            body = res.text
+            self.assertNotIn("Traceback (most recent call last)", body)
+            self.assertNotIn("DATABASE_URL", body)
+            self.assertNotIn("app.main", body)
+        finally:
+            settings.ENVIRONMENT = original_env
+
+    def test_16_user_b_cannot_access_user_a_evidence_or_validation(self):
+        """
+        Verify User B cannot access validation reports or query evidence for User A's products.
+        """
+        # 1. Validation Report
+        val_res = self.client.get(
+            f"/api/v1/validation/product/{self.product_a_id}",
+            headers={"Authorization": f"Bearer {self.token_b}"},
+        )
+        self.assertEqual(val_res.status_code, 403)
+
+        # 2. Query execution on User A's job
+        query_res = self.client.post(
+            f"/api/v1/query/{self.job_a_id}",
+            json={"query": "Find all sanding belts"},
+            headers={"Authorization": f"Bearer {self.token_b}"},
+        )
+        self.assertEqual(query_res.status_code, 403)
+
+    def test_17_readiness_probe_clean_response(self):
+        """
+        Verify that /ready probe confirms database readiness without exposing connection strings or internals.
+        """
+        res = self.client.get("/ready")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["status"], "ready")
+        self.assertNotIn("password", res.text)
+        self.assertNotIn("DATABASE_URL", res.text)
+
+    def test_18_production_secret_validation_rejects_insecure_config(self):
+        """
+        Verify that validate_production_environment raises ValueError when default/insecure secrets are used in production.
+        """
+        from app.core.config import Settings
+
+        # Insecure default secret in production
+        bad_settings = Settings(
+            ENVIRONMENT="production",
+            AUTH_SECRET="specra-development-secret-key-change-in-production-32bytes",
+            CORS_ORIGINS=["http://localhost:5173"],
+        )
+        with self.assertRaises(ValueError):
+            bad_settings.validate_production_environment()
+
+        # Wildcard CORS in production
+        bad_cors = Settings(
+            ENVIRONMENT="production",
+            AUTH_SECRET="a" * 40,
+            CORS_ORIGINS=["*"],
+        )
+        with self.assertRaises(ValueError):
+            bad_cors.validate_production_environment()
+
+        # Secure config passes
+        good_settings = Settings(
+            ENVIRONMENT="production",
+            AUTH_SECRET="a_very_secure_random_secret_with_sufficient_entropy_64_bytes_long_12345",
+            CORS_ORIGINS=["https://app.specra.io"],
+        )
+        # Should not raise
+        good_settings.validate_production_environment()
 
 
 if __name__ == "__main__":

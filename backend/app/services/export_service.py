@@ -40,6 +40,18 @@ class ExportService:
             .all()
         )
 
+        # Pre-fetch validation results in a single bulk query (Eliminates N+1 database queries)
+        val_statuses_by_product: Dict[uuid.UUID, List[str]] = {}
+        if products:
+            product_ids = [p.id for p in products]
+            raw_vals = (
+                db.query(ValidationResult.product_id, ValidationResult.status)
+                .filter(ValidationResult.product_id.in_(product_ids))
+                .all()
+            )
+            for p_id, p_status in raw_vals:
+                val_statuses_by_product.setdefault(p_id, []).append(p_status or "")
+
         mapped_rows: List[Dict[str, str]] = []
         warning_products = 0
         error_products = 0
@@ -55,11 +67,11 @@ class ExportService:
                 if v and str(v).strip():
                     populated_field_counts[k] += 1
 
-            # 2. Check validation status if available
-            val_results = db.query(ValidationResult).filter(ValidationResult.product_id == product.id).all()
-            if val_results:
-                has_err = any(r.status == "ERROR" or (r.status and r.status.upper() == "ERROR") for r in val_results)
-                has_warn = any(r.status == "WARNING" or (r.status and r.status.upper() == "WARNING") for r in val_results)
+            # 2. Check validation status from pre-fetched lookup
+            val_statuses = val_statuses_by_product.get(product.id, [])
+            if val_statuses:
+                has_err = any(s.upper() == "ERROR" for s in val_statuses)
+                has_warn = any(s.upper() == "WARNING" for s in val_statuses)
                 if has_err:
                     error_products += 1
                 elif has_warn:

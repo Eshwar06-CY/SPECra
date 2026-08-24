@@ -1,0 +1,1766 @@
+{
+  "MFR URL": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'MFR URL' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Ref URL 1": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Ref URL 1' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Ref URL 2": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Ref URL 2' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Ref URL 3": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Ref URL 3' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Ref URL 4": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Ref URL 4' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Ref URL 5": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Ref URL 5' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "PART_NUMBER": {
+    "status": "GREEN",
+    "source": "Mfg_Part_Num",
+    "output": "100% Populated",
+    "issue": "None",
+    "recommendation": "Preserve 100% deterministic mapping."
+  },
+  "Dept": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Dept' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Class": {
+    "status": "ORANGE",
+    "source": "Part_Desc / AI Category",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "Class/Category (Sanding Belt, Cut-Off Disc) is identified during AI extraction or taxonomy matching.",
+    "recommendation": "Apply deterministic regex taxonomy classification for abrasive and industrial tooling classes."
+  },
+  "Fine": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Fine' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "SKU - MY_PART_NUMBER": {
+    "status": "GREEN",
+    "source": "Mfg_Part_Num",
+    "output": "100% Populated",
+    "issue": "None",
+    "recommendation": "Preserve 100% deterministic mapping."
+  },
+  "Mfg_Part_Num": {
+    "status": "GREEN",
+    "source": "Mfg_Part_Num",
+    "output": "100% Populated",
+    "issue": "None",
+    "recommendation": "Preserve 100% deterministic mapping."
+  },
+  "Part_Desc": {
+    "status": "GREEN",
+    "source": "Part_Desc",
+    "output": "100% Populated",
+    "issue": "None",
+    "recommendation": "Preserve raw passthrough."
+  },
+  "E1_Brand": {
+    "status": "GREEN",
+    "source": "E1_Brand",
+    "output": "100% Populated (including source unbranded placeholders)",
+    "issue": "None",
+    "recommendation": "Preserve passthrough of raw catalog data."
+  },
+  "Unilog_Brand": {
+    "status": "GREEN",
+    "source": "Unilog_Brand",
+    "output": "100% Populated (including source unbranded placeholders)",
+    "issue": "None",
+    "recommendation": "Preserve passthrough of raw catalog data."
+  },
+  "DIB_Brand": {
+    "status": "GREEN",
+    "source": "DIB_Brand",
+    "output": "100% Populated (including source unbranded placeholders)",
+    "issue": "None",
+    "recommendation": "Preserve passthrough of raw catalog data."
+  },
+  "Part_Manuf": {
+    "status": "GREEN",
+    "source": "Part_Manuf",
+    "output": "100% Populated (including source unbranded placeholders)",
+    "issue": "None",
+    "recommendation": "Preserve passthrough of raw catalog data."
+  },
+  "MANUFACTURER_NAME": {
+    "status": "ORANGE",
+    "source": "Part_Manuf",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "1000 rows in source have valid Part_Manuf (e.g. 'Freud Inc (2435)', 'Jam Industrial Supply LLC (JAMIN)'), but MANUFACTURER_NAME only populates when AI analysis or enrichment runs.",
+    "recommendation": "Add automatic fallback to Part_Manuf in export engine mapping for unanalyzed bulk exports."
+  },
+  "BRAND_NAME": {
+    "status": "ORANGE",
+    "source": "Part_Desc / Brand columns",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "~224 rows have extractable brand names (Diablo, 3M, HIOLIT, Abranet) in Part_Desc, but only AI/enriched rows have BRAND_NAME populated.",
+    "recommendation": "Run bulk deterministic brand reconciliation across all catalog rows during export."
+  },
+  "TRADE_NAME": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'TRADE_NAME' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "MANUFACTURER_PART_NUMBER": {
+    "status": "GREEN",
+    "source": "Mfg_Part_Num",
+    "output": "100% Populated",
+    "issue": "None",
+    "recommendation": "Preserve 100% deterministic mapping."
+  },
+  "ALTERNATE_PART_NUMBER": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'ALTERNATE_PART_NUMBER' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Classpath": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Classpath' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "MOBILE_DESC": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'MOBILE_DESC' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "INVOICE_DESC": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'INVOICE_DESC' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "SHORT_DESC": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'SHORT_DESC' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "LONG_DESC1": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'LONG_DESC1' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "RETAIL_DESC": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'RETAIL_DESC' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "MARKETING_DESCRIPTION": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'MARKETING_DESCRIPTION' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "ITEM_FEATURES_1": {
+    "status": "BLUE",
+    "source": "AI Extraction from Part_Desc with Evidence",
+    "output": "Populated in analyzed rows",
+    "issue": "Requires AI synthesis for descriptive bullet points.",
+    "recommendation": "Batch process products with Gemini to generate feature highlights."
+  },
+  "ITEM_FEATURES_2": {
+    "status": "BLUE",
+    "source": "AI Extraction from Part_Desc with Evidence",
+    "output": "Populated in analyzed rows",
+    "issue": "Requires AI synthesis for descriptive bullet points.",
+    "recommendation": "Batch process products with Gemini to generate feature highlights."
+  },
+  "ITEM_FEATURES_3": {
+    "status": "BLUE",
+    "source": "AI Extraction from Part_Desc with Evidence",
+    "output": "Populated in analyzed rows",
+    "issue": "Requires AI synthesis for descriptive bullet points.",
+    "recommendation": "Batch process products with Gemini to generate feature highlights."
+  },
+  "ITEM_FEATURES_4": {
+    "status": "BLUE",
+    "source": "AI Extraction from Part_Desc with Evidence",
+    "output": "Populated in analyzed rows",
+    "issue": "Requires AI synthesis for descriptive bullet points.",
+    "recommendation": "Batch process products with Gemini to generate feature highlights."
+  },
+  "ITEM_FEATURES_5": {
+    "status": "BLUE",
+    "source": "AI Extraction from Part_Desc with Evidence",
+    "output": "Populated in analyzed rows",
+    "issue": "Requires AI synthesis for descriptive bullet points.",
+    "recommendation": "Batch process products with Gemini to generate feature highlights."
+  },
+  "ITEM_FEATURES_6": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_7": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_8": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_9": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_10": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_11": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_12": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_13": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_14": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_15": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_16": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_17": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_18": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_19": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "ITEM_FEATURES_20": {
+    "status": "YELLOW",
+    "source": "Unavailable in short raw description",
+    "output": "Correctly blank",
+    "issue": "Raw supplier catalog only provides a single short Part_Desc string (e.g. ~50 chars), not a full 20-bullet datasheet.",
+    "recommendation": "Keep correctly blank to avoid hallucinating fictitious features."
+  },
+  "With": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'With' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Standard/Approvals": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Standard/Approvals' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Prop 65": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Prop 65' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Application": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Application' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Includes": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Includes' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Product Name": {
+    "status": "ORANGE",
+    "source": "AI Synthesis / Part_Desc",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "Product Name is generated during AI analysis/enrichment. In pure unanalyzed bulk export, it falls back to empty if not analyzed.",
+    "recommendation": "Default Product Name to normalized Part_Desc when AI analysis has not yet run."
+  },
+  "ATTRIBUTE_LABEL 1": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_VALUE 1": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_UOM 1": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_LABEL 2": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_VALUE 2": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_UOM 2": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_LABEL 3": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_VALUE 3": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_UOM 3": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_LABEL 4": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_VALUE 4": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_UOM 4": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_LABEL 5": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_VALUE 5": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_UOM 5": {
+    "status": "BLUE",
+    "source": "Structured Attributes (Grit, Size, Material, Package Qty)",
+    "output": "Populated in analyzed rows",
+    "issue": "Populated when AI or deterministic enrichment extracts slot attributes.",
+    "recommendation": "Populate slots 1-5 from deterministic Grit, Diameter, Width, Length, and Pack Qty."
+  },
+  "ATTRIBUTE_LABEL 6": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 6": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 6": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 7": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 7": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 7": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 8": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 8": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 8": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 9": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 9": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 9": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 10": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 10": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 10": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 11": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 11": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 11": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 12": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 12": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 12": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 13": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 13": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 13": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 14": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 14": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 14": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 15": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 15": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 15": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 16": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 16": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 16": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 17": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 17": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 17": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 18": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 18": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 18": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 19": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 19": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 19": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 20": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 20": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 20": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 21": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 21": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 21": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 22": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 22": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 22": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 23": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 23": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 23": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 24": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 24": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 24": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 25": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 25": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 25": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 26": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 26": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 26": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 27": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 27": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 27": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 28": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 28": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 28": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 29": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 29": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 29": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 30": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 30": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 30": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 31": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 31": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 31": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 32": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 32": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 32": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 33": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 33": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 33": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 34": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 34": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 34": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 35": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 35": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 35": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 36": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 36": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 36": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 37": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 37": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 37": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 38": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 38": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 38": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 39": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 39": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 39": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 40": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 40": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 40": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 41": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 41": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 41": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 42": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 42": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 42": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 43": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 43": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 43": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 44": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 44": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 44": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 45": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 45": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 45": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 46": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 46": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 46": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 47": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 47": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 47": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 48": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 48": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 48": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 49": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 49": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 49": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_LABEL 50": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_VALUE 50": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "ATTRIBUTE_UOM 50": {
+    "status": "YELLOW",
+    "source": "Unavailable in short input rows",
+    "output": "Correctly blank",
+    "issue": "Supplier input catalog does not contain 50 distinct technical attributes per item.",
+    "recommendation": "Keep correctly blank without inventing dummy attributes."
+  },
+  "UPC": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'UPC' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "EAN": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'EAN' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "GTIN": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'GTIN' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "UNSPSC": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'UNSPSC' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Warranty": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Warranty' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "List Price": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'List Price' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Selling Qty": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Packaging pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "101 rows explicitly contain packaging quantities ('6pc', '50 Disc/Box', '100/box') in Part_Desc.",
+    "recommendation": "Apply deterministic packaging extractor during catalog ingestion and export mapping."
+  },
+  "Selling UOM": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Packaging pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "101 rows explicitly contain packaging quantities ('6pc', '50 Disc/Box', '100/box') in Part_Desc.",
+    "recommendation": "Apply deterministic packaging extractor during catalog ingestion and export mapping."
+  },
+  "Standard Packaging Information": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Packaging pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "101 rows explicitly contain packaging quantities ('6pc', '50 Disc/Box', '100/box') in Part_Desc.",
+    "recommendation": "Apply deterministic packaging extractor during catalog ingestion and export mapping."
+  },
+  "LENGTH": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Dimensions pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "54 rows contain clear width x length or diameter specs in Part_Desc.",
+    "recommendation": "Apply deterministic dimension parser across all 1,000 rows in bulk export mapper."
+  },
+  "LENGTH_UOM": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Dimensions pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "54 rows contain clear width x length or diameter specs in Part_Desc.",
+    "recommendation": "Apply deterministic dimension parser across all 1,000 rows in bulk export mapper."
+  },
+  "HEIGHT": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'HEIGHT' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "HEIGHT_UOM": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'HEIGHT_UOM' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "WIDTH": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Dimensions pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "54 rows contain clear width x length or diameter specs in Part_Desc.",
+    "recommendation": "Apply deterministic dimension parser across all 1,000 rows in bulk export mapper."
+  },
+  "WIDTH_UOM": {
+    "status": "ORANGE",
+    "source": "Part_Desc (Dimensions pattern)",
+    "output": "Populated in analyzed rows; blank in unanalyzed bulk rows",
+    "issue": "54 rows contain clear width x length or diameter specs in Part_Desc.",
+    "recommendation": "Apply deterministic dimension parser across all 1,000 rows in bulk export mapper."
+  },
+  "WEIGHT": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'WEIGHT' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "WEIGHT_UOM": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'WEIGHT_UOM' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "VOLUME": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'VOLUME' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "VOLUME_UOM": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'VOLUME_UOM' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Product Image": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Product Image' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Alternate Image 1": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Alternate Image 1' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Alternate Image 2": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Alternate Image 2' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Alternate Image 3": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Alternate Image 3' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Alternate Image 4": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Alternate Image 4' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "SDS": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'SDS' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "SDS_1": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'SDS_1' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Warranty Information": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Warranty Information' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Catalog": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Catalog' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Specification Sheet": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Specification Sheet' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Instruction/Installation Manual": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Instruction/Installation Manual' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Service Manual": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Service Manual' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Owners/User Manual": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Owners/User Manual' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Line Drawing": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Line Drawing' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "MTR": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'MTR' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "RoHS": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'RoHS' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Full Engineering Drawing": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Full Engineering Drawing' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Energy Star Guide": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Energy Star Guide' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Technical Bulletin": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Technical Bulletin' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Submittal": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Submittal' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Compatibility Chart": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Compatibility Chart' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Size Chart": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Size Chart' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Product Label/Insert": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Product Label/Insert' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Video Link": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Video Link' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Video Link 1": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Video Link 1' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Country Of Origin": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Country Of Origin' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Discontinued": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Discontinued' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  },
+  "Actual Image (Yes/No)": {
+    "status": "YELLOW",
+    "source": "Unavailable in input dataset",
+    "output": "Correctly blank",
+    "issue": "Field 'Actual Image (Yes/No)' is not present in the input catalog file (Mfg_Part_Num, Part_Desc, E1_Brand, Unilog_Brand, DIB_Brand, Part_Manuf).",
+    "recommendation": "Keep correctly blank to strictly obey the no-hallucination mandate."
+  }
+}

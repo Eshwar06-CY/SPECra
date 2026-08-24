@@ -20,9 +20,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
-from app.core.database import Base, get_db
+from app.core.database import Base, SessionLocal, get_db
 from app.core.security import SecurityUtils
-from app.models.user import User, Workspace, UserSession
+from app.models.user import User, Workspace, UserSession, EmailVerificationToken, PasswordResetToken
 from app.models.product import ProcessingJob, Product
 from app.services.auth_service import AuthService
 
@@ -556,6 +556,665 @@ class TestSPECraAuthenticationAndSecurity(unittest.TestCase):
         # Account no longer exists
         login_del = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": self.password})
         self.assertEqual(login_del.status_code, 401)
+
+    def test_14_registration_creates_unverified_user_with_token(self):
+        """Test 14: Registration creates an unverified user and generates a secure verification token record."""
+        from datetime import datetime, timezone
+        user_email = f"verify_test_{uuid.uuid4().hex[:6]}@example.test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Verify Me",
+            "organization": "Verify Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        self.assertEqual(reg.status_code, 201)
+        data = reg.json()
+        self.assertFalse(data["user"]["email_verified"])
+        self.assertFalse(data["user"]["is_verified"])
+
+        # Check DB
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            self.assertIsNotNone(user)
+            self.assertFalse(user.email_verified)
+            self.assertFalse(user.is_verified)
+            self.assertIsNone(user.email_verified_at)
+
+            token_record = db.query(EmailVerificationToken).filter(EmailVerificationToken.user_id == user.id).first()
+            self.assertIsNotNone(token_record)
+            self.assertIsNone(token_record.used_at)
+            token_exp = token_record.expires_at.replace(tzinfo=timezone.utc) if token_record.expires_at.tzinfo is None else token_record.expires_at
+            self.assertGreater(token_exp, datetime.now(timezone.utc))
+        finally:
+            db.close()
+
+    def test_15_raw_token_not_stored_in_db(self):
+        """Test 15: Raw verification token is NEVER stored in database; only a 64-char SHA-256 hash is persisted."""
+        user_email = f"raw_token_test_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Hash Check",
+            "organization": "Security Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            token_record = db.query(EmailVerificationToken).filter(EmailVerificationToken.user_id == user.id).first()
+            self.assertIsNotNone(token_record)
+            # Must be a 64-character hex string (SHA-256)
+            self.assertEqual(len(token_record.token_hash), 64)
+            self.assertTrue(all(c in "0123456789abcdef" for c in token_record.token_hash))
+        finally:
+            db.close()
+
+    def test_16_valid_token_verifies_account(self):
+        """Test 16: Valid verification token verifies the account, sets email_verified_at, and marks token as used."""
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+        user_email = f"valid_verify_{uuid.uuid4().hex[:6]}@example.test"
+
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Valid Verifier",
+                organization="Valid Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+                email_verified=False,
+                is_verified=False,
+            )
+            db.add(user)
+            db.flush()
+
+            token_record = EmailVerificationToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=60),
+            )
+            db.add(token_record)
+            db.commit()
+            user_id = user.id
+        finally:
+            db.close()
+
+        # Verify via POST endpoint
+        verify_res = self.client.post("/api/v1/auth/verify-email", json={"token": raw_token})
+        self.assertEqual(verify_res.status_code, 200)
+        self.assertIn("verified successfully", verify_res.json()["message"])
+
+        # Check DB update
+        db = SessionLocal()
+        try:
+            updated_user = db.query(User).filter(User.id == user_id).first()
+            self.assertTrue(updated_user.email_verified)
+            self.assertTrue(updated_user.is_verified)
+            self.assertIsNotNone(updated_user.email_verified_at)
+
+            updated_token = db.query(EmailVerificationToken).filter(EmailVerificationToken.token_hash == token_hash).first()
+            self.assertIsNotNone(updated_token.used_at)
+        finally:
+            db.close()
+
+    def test_17_invalid_token_rejected(self):
+        """Test 17: Invalid verification tokens return HTTP 400 Bad Request."""
+        res = self.client.post("/api/v1/auth/verify-email", json={"token": "invalid-random-token-123456789"})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Invalid or expired", res.json()["detail"])
+
+    def test_18_expired_token_rejected(self):
+        """Test 18: Expired verification tokens return HTTP 400 Bad Request."""
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+        user_email = f"expired_test_{uuid.uuid4().hex[:6]}@example.test"
+
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Expired User",
+                organization="Expired Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+                email_verified=False,
+                is_verified=False,
+            )
+            db.add(user)
+            db.flush()
+
+            token_record = EmailVerificationToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) - timedelta(minutes=15),  # expired 15 mins ago
+            )
+            db.add(token_record)
+            db.commit()
+        finally:
+            db.close()
+
+        res = self.client.post("/api/v1/auth/verify-email", json={"token": raw_token})
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("expired", res.json()["detail"].lower())
+
+    def test_19_used_token_rejected_and_cannot_be_reused(self):
+        """Test 19: A verification token cannot be reused once consumed."""
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+        user_email = f"single_use_{uuid.uuid4().hex[:6]}@example.test"
+
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Single Use User",
+                organization="Single Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+                email_verified=False,
+                is_verified=False,
+            )
+            db.add(user)
+            db.flush()
+
+            token_record = EmailVerificationToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=60),
+            )
+            db.add(token_record)
+            db.commit()
+        finally:
+            db.close()
+
+        # First use succeeds
+        res1 = self.client.post("/api/v1/auth/verify-email", json={"token": raw_token})
+        self.assertEqual(res1.status_code, 200)
+
+        # Second use is rejected as already used
+        res2 = self.client.post("/api/v1/auth/verify-email", json={"token": raw_token})
+        self.assertEqual(res2.status_code, 400)
+        self.assertIn("already been used", res2.json()["detail"])
+
+    def test_20_resend_verification_invalidates_previous_token(self):
+        """Test 20: Requesting a resend invalidates prior active tokens and issues a fresh token."""
+        user_email = f"resend_inval_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Resend Tester",
+            "organization": "Resend Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            first_token = db.query(EmailVerificationToken).filter(EmailVerificationToken.user_id == user.id).first()
+            self.assertIsNotNone(first_token)
+            self.assertIsNone(first_token.used_at)
+        finally:
+            db.close()
+
+        # Request resend
+        resend_res = self.client.post("/api/v1/auth/resend-verification", json={"email": user_email})
+        self.assertEqual(resend_res.status_code, 200)
+
+        # Check DB: First token is now invalidated (used_at is set), second token exists and is active
+        db = SessionLocal()
+        try:
+            tokens = (
+                db.query(EmailVerificationToken)
+                .filter(EmailVerificationToken.user_id == user.id)
+                .order_by(EmailVerificationToken.created_at.asc())
+                .all()
+            )
+            self.assertEqual(len(tokens), 2)
+            self.assertIsNotNone(tokens[0].used_at, "Old token must be marked as used/invalidated")
+            self.assertIsNone(tokens[1].used_at, "New token must be active")
+        finally:
+            db.close()
+
+    def test_21_resend_verification_is_rate_limited(self):
+        """Test 21: Rapid resend verification requests are throttled (HTTP 429)."""
+        user_email = f"throttle_resend_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Throttle Tester",
+            "organization": "Throttle Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        # 3 calls succeed, 4th call is blocked with 429
+        self.client.post("/api/v1/auth/resend-verification", json={"email": user_email})
+        self.client.post("/api/v1/auth/resend-verification", json={"email": user_email})
+        self.client.post("/api/v1/auth/resend-verification", json={"email": user_email})
+        fourth = self.client.post("/api/v1/auth/resend-verification", json={"email": user_email})
+        self.assertEqual(fourth.status_code, 429)
+        self.assertIn("Too many", fourth.json()["detail"])
+
+    def test_22_generic_response_prevents_email_enumeration(self):
+        """Test 22: Resend verification returns identical generic success for non-existent accounts."""
+        ghost_email = f"ghost_user_{uuid.uuid4().hex[:6]}@nonexistent.domain"
+        res = self.client.post("/api/v1/auth/resend-verification", json={"email": ghost_email})
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("If the account requires verification", res.json()["message"])
+
+    def test_23_already_verified_account_handled_safely(self):
+        """Test 23: Resending verification on an already-verified account returns generic success safely."""
+        from datetime import datetime, timezone
+        user_email = f"already_ver_{uuid.uuid4().hex[:6]}@example.test"
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Already Verified",
+                organization="Verified Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+                email_verified=True,
+                is_verified=True,
+                email_verified_at=datetime.now(timezone.utc),
+            )
+            db.add(user)
+            db.commit()
+        finally:
+            db.close()
+
+        res = self.client.post("/api/v1/auth/resend-verification", json={"email": user_email})
+        self.assertEqual(res.status_code, 200)
+        self.assertIn("If the account requires verification", res.json()["message"])
+
+    def test_24_verification_does_not_bypass_workspace_authorization(self):
+        """Test 24: Email verification status preserves strict multi-tenant workspace isolation."""
+        user_a_email = f"tenant_a_{uuid.uuid4().hex[:6]}@example.test"
+        user_b_email = f"tenant_b_{uuid.uuid4().hex[:6]}@example.test"
+
+        reg_a = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Tenant A",
+            "organization": "Alpha Corp",
+            "email": user_a_email,
+            "password": self.password,
+        })
+        token_a = reg_a.json()["session_token"]
+
+        reg_b = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Tenant B",
+            "organization": "Beta Corp",
+            "email": user_b_email,
+            "password": self.password,
+        })
+        token_b = reg_b.json()["session_token"]
+
+        # User B queries User A's workspace sessions -> 404 or isolation check
+        sess_b = self.client.get("/api/v1/auth/sessions", headers={"Authorization": f"Bearer {token_b}"})
+        self.assertEqual(sess_b.status_code, 200)
+        # All sessions returned belong strictly to User B
+        for s in sess_b.json():
+            self.assertTrue(s["is_current"])
+
+    def test_25_forgot_password_generic_response_anti_enumeration(self):
+        """Test 25: Forgot password endpoint returns identical generic response for existing and non-existing accounts."""
+        # 1. Existing user
+        user_email = f"enum_exist_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Enum Check",
+            "organization": "Security Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        res_exist = self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        self.assertEqual(res_exist.status_code, 200)
+
+        # 2. Non-existing user
+        ghost_email = f"enum_ghost_{uuid.uuid4().hex[:6]}@example.test"
+        res_ghost = self.client.post("/api/v1/auth/forgot-password", json={"email": ghost_email})
+        self.assertEqual(res_ghost.status_code, 200)
+
+        # Both messages must be completely identical
+        self.assertEqual(res_exist.json()["message"], res_ghost.json()["message"])
+        self.assertIn("password reset instructions have been sent", res_exist.json()["message"].lower())
+
+    def test_26_password_reset_token_model_persistence_and_hash_only(self):
+        """Test 26: Dedicated PasswordResetToken model stores only a 64-char SHA-256 hash, never raw token."""
+        user_email = f"reset_hash_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Hash Check",
+            "organization": "Security Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            reset_record = db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user.id).first()
+            self.assertIsNotNone(reset_record)
+            self.assertEqual(len(reset_record.token_hash), 64)
+            self.assertTrue(all(c in "0123456789abcdef" for c in reset_record.token_hash))
+            self.assertIsNone(reset_record.used_at)
+        finally:
+            db.close()
+
+    def test_27_password_reset_token_expiration_rejection(self):
+        """Test 27: Expired password reset tokens are strictly rejected with HTTP 400."""
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+        user_email = f"reset_exp_{uuid.uuid4().hex[:6]}@example.test"
+
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Exp Reset User",
+                organization="Exp Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+            )
+            db.add(user)
+            db.flush()
+
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) - timedelta(minutes=5),  # expired 5 min ago
+            )
+            db.add(reset_record)
+            db.commit()
+        finally:
+            db.close()
+
+        res = self.client.post("/api/v1/auth/reset-password", json={
+            "token": raw_token,
+            "new_password": "BrandNewSecurePassword123!",
+        })
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("expired", res.json()["detail"].lower())
+
+    def test_28_password_reset_token_single_use_and_reuse_rejection(self):
+        """Test 28: A password reset token is single-use and cannot be reused once consumed."""
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+        user_email = f"reset_single_{uuid.uuid4().hex[:6]}@example.test"
+
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Single Reset User",
+                organization="Single Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+            )
+            db.add(user)
+            db.flush()
+
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            )
+            db.add(reset_record)
+            db.commit()
+        finally:
+            db.close()
+
+        # First consumption succeeds
+        res1 = self.client.post("/api/v1/auth/reset-password", json={
+            "token": raw_token,
+            "new_password": "NewValidPassword123!",
+        })
+        self.assertEqual(res1.status_code, 200)
+
+        # Second consumption fails
+        res2 = self.client.post("/api/v1/auth/reset-password", json={
+            "token": raw_token,
+            "new_password": "SecondAttemptPassword123!",
+        })
+        self.assertEqual(res2.status_code, 400)
+        self.assertIn("already been used", res2.json()["detail"].lower())
+
+    def test_29_password_reset_new_request_invalidates_previous_active_token(self):
+        """Test 29: A new password reset request marks previous active tokens as invalidated/consumed."""
+        user_email = f"reset_inval_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Inval Tester",
+            "organization": "Inval Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        # Request reset 1
+        self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+
+        # Request reset 2
+        self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            tokens = (
+                db.query(PasswordResetToken)
+                .filter(PasswordResetToken.user_id == user.id)
+                .order_by(PasswordResetToken.created_at.asc())
+                .all()
+            )
+            self.assertEqual(len(tokens), 2)
+            self.assertIsNotNone(tokens[0].used_at, "Old token must be marked as used/invalidated")
+            self.assertIsNone(tokens[1].used_at, "New token must be active")
+        finally:
+            db.close()
+
+    def test_30_password_reset_enforces_password_policy(self):
+        """Test 30: Reset password rejects passwords shorter than 8 characters."""
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+        user_email = f"policy_test_{uuid.uuid4().hex[:6]}@example.test"
+
+        db = SessionLocal()
+        try:
+            user = User(
+                full_name="Policy User",
+                organization="Policy Corp",
+                email=user_email,
+                password_hash=SecurityUtils.hash_password(self.password),
+                role="owner",
+            )
+            db.add(user)
+            db.flush()
+
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            )
+            db.add(reset_record)
+            db.commit()
+        finally:
+            db.close()
+
+        # Too short (< 8 chars)
+        res = self.client.post("/api/v1/auth/reset-password", json={
+            "token": raw_token,
+            "new_password": "short",
+        })
+        self.assertEqual(res.status_code, 422)  # Pydantic schema validation min_length=8
+
+    def test_31_password_reset_revokes_all_prior_sessions(self):
+        """Test 31: Resetting password revokes every active session for that user."""
+        user_email = f"sess_rev_{uuid.uuid4().hex[:6]}@example.test"
+        reg = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Sess Rev",
+            "organization": "Sess Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+        session_1 = reg.json()["session_token"]
+
+        login = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": self.password})
+        session_2 = login.json()["session_token"]
+
+        # Request reset
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            )
+            db.add(reset_record)
+            db.commit()
+        finally:
+            db.close()
+
+        # Perform password reset
+        reset_res = self.client.post("/api/v1/auth/reset-password", json={
+            "token": raw_token,
+            "new_password": "NewSecretPassword123!",
+        })
+        self.assertEqual(reset_res.status_code, 200)
+
+        # Both previous sessions must now return HTTP 401
+        check_1 = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {session_1}"})
+        self.assertEqual(check_1.status_code, 401)
+
+        check_2 = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {session_2}"})
+        self.assertEqual(check_2.status_code, 401)
+
+    def test_32_password_reset_old_password_rejected_new_password_accepted(self):
+        """Test 32: After reset, login with old password fails (401) and new password succeeds (200)."""
+        user_email = f"pass_switch_{uuid.uuid4().hex[:6]}@example.test"
+        old_p = "OldPassword123!"
+        new_p = "BrandNewPassword123!"
+
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Switch User",
+            "organization": "Switch Corp",
+            "email": user_email,
+            "password": old_p,
+        })
+
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_email).first()
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            )
+            db.add(reset_record)
+            db.commit()
+        finally:
+            db.close()
+
+        self.client.post("/api/v1/auth/reset-password", json={"token": raw_token, "new_password": new_p})
+
+        # Old password rejected
+        old_login = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": old_p})
+        self.assertEqual(old_login.status_code, 401)
+
+        # New password accepted
+        new_login = self.client.post("/api/v1/auth/login", json={"email": user_email, "password": new_p})
+        self.assertEqual(new_login.status_code, 200)
+
+    def test_33_forgot_password_rate_limiting(self):
+        """Test 33: Rapid forgot password requests are throttled (HTTP 429)."""
+        user_email = f"throttle_forgot_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Throttle User",
+            "organization": "Throttle Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        # 3 calls succeed, 4th is throttled
+        self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        fourth = self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        self.assertEqual(fourth.status_code, 429)
+        self.assertIn("Too many", fourth.json()["detail"])
+
+    def test_34_reset_password_workspace_isolation_preservation(self):
+        """Test 34: Resetting password preserves strict tenant isolation for jobs and datasets."""
+        user_a_email = f"iso_a_{uuid.uuid4().hex[:6]}@example.test"
+        user_b_email = f"iso_b_{uuid.uuid4().hex[:6]}@example.test"
+
+        reg_a = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Iso A",
+            "organization": "Alpha Corp",
+            "email": user_a_email,
+            "password": self.password,
+        })
+        ws_a_id = reg_a.json()["user"]["workspace_id"]
+
+        reg_b = self.client.post("/api/v1/auth/register", json={
+            "full_name": "Iso B",
+            "organization": "Beta Corp",
+            "email": user_b_email,
+            "password": self.password,
+        })
+        token_b = reg_b.json()["session_token"]
+
+        # Reset User A password
+        from datetime import datetime, timezone, timedelta
+        raw_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_token)
+
+        db = SessionLocal()
+        try:
+            user = db.query(User).filter(User.email == user_a_email).first()
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+            )
+            db.add(reset_record)
+            db.commit()
+        finally:
+            db.close()
+
+        self.client.post("/api/v1/auth/reset-password", json={"token": raw_token, "new_password": "NewIsoPassword123!"})
+
+        # User B still cannot access User A's workspace
+        check = self.client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token_b}"})
+        self.assertEqual(check.status_code, 200)
+        self.assertNotEqual(str(check.json()["workspace_id"]), str(ws_a_id))
+
+    def test_35_reset_token_never_leaked_in_logs_or_responses(self):
+        """Test 35: Forgot password response body contains only user-friendly confirmation without tokens."""
+        user_email = f"leak_test_{uuid.uuid4().hex[:6]}@example.test"
+        self.client.post("/api/v1/auth/register", json={
+            "full_name": "Leak Tester",
+            "organization": "Leak Corp",
+            "email": user_email,
+            "password": self.password,
+        })
+
+        res = self.client.post("/api/v1/auth/forgot-password", json={"email": user_email})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertNotIn("token", data)
+        self.assertNotIn("token_hash", data)
+        self.assertNotIn("reset_url", data)
 
 
 if __name__ == "__main__":

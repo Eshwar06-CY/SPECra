@@ -281,13 +281,13 @@ npm run dev
 
 ## 10. Automated Testing
 
-### Backend Test Suite (107 Tests)
+### Backend Test Suite (171 Tests)
 ```powershell
 cd D:\Antigravity_Projects\deadlock\backend
 ..\venv\Scripts\Activate.ps1
 python -m unittest discover -s tests
 ```
-*Executes unit tests, database integrations, Gemini AI abstractions, deterministic enrichment rules, multi-tenant IDOR security checks, password resets, session management, email verification, path traversal defenses, spreadsheet formula injection sanitization, HTTP security headers, natural-language query planning, and 252-column export verifications.*
+*Executes unit tests, database integrations, Gemini AI abstractions, deterministic enrichment rules, multi-tenant IDOR security checks, password resets with single-use tokens, session management, cryptographic email verification, Brevo/SMTP email dispatch abstractions, path traversal defenses, spreadsheet formula injection sanitization, HTTP security headers (CSP, HSTS, X-Frame-Options), request size protection, adversarial red-team test validations, readiness probes, production startup validation, natural-language query planning, and 252-column export verifications.*
 
 ### Frontend Production Build
 ```powershell
@@ -298,21 +298,27 @@ npm run build
 
 ---
 
-## 11. Security Implementation
+## 11. Security & Email Architecture
 
 ### Implemented Security Measures
 - **Password Security**: PBKDF2-HMAC-SHA256 with 100,000 iterations and per-user 16-byte random salt.
+- **Cryptographic Token Lifecycle**: 256-bit CSPRNG tokens (`secrets.token_urlsafe(32)`) with single-use SHA-256 hash storage and expiration enforcement.
+- **Email Verification & Password Reset**: Automated workflows with global session revocation upon password reset and generic anti-enumeration responses.
+- **Transactional Brevo SMTP Delivery**: Integrated Brevo SMTP (Port 587 STARTTLS) with zero token/credential leakage in logs or responses.
 - **Session Protection**: Server-side session tokens stored in PostgreSQL with HttpOnly/SameSite cookie and Bearer header fallback.
-- **Multi-Tenant Isolation**: Resources (datasets, products, intelligence, enrichments, validations, exports) strictly bound to `workspace_id`.
-- **IDOR Protection**: Verified server-side check rejecting cross-tenant resource access with `403 Forbidden`.
+- **Multi-Tenant Isolation (IDOR Defense)**: Resources (datasets, products, intelligence, enrichments, validations, natural-language queries, exports) strictly bound to `workspace_id` with verified `403 Forbidden` rejection.
+- **HTTP Security Headers**: Enterprise middleware enforcing `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`, strict Content Security Policy (CSP), and configurable HSTS.
+- **Request Size & Upload Protection**: 50MB global request body capping (`HTTP 413`), sanitized filenames, and UUID-isolated storage.
+- **Spreadsheet Formula Injection Defense**: Neutralizes executable spreadsheet cells starting with `=`, `@`, `+`, or `\t` during CSV and XLSX generation.
 - **SQL Injection Prevention**: Safe parameterized queries via SQLAlchemy ORM and schema whitelisting.
 - **CORS Whitelisting**: Restricted to explicitly approved development origins (`localhost:5173`, `localhost:3000`).
 
-### Recommended Production Hardening
-- Enforce HTTPS and set `COOKIE_SECURE=True`.
-- Deploy Redis for cluster-wide rate limiting.
-- Implement transactional SMTP/SES email delivery for automated password resets.
-- Store secrets in cloud key management vaults (e.g. AWS Secrets Manager, GCP Secret Manager).
+### Production Deployment Hardening
+- Enforce ingress TLS 1.3 termination on reverse proxy (Cloudflare / AWS ALB / Nginx).
+- Configure dedicated least-privilege PostgreSQL application user (`SELECT, INSERT, UPDATE, DELETE` only).
+- Deploy Redis cluster for distributed multi-instance rate limiting.
+- Enable automated encrypted cloud database snapshots and point-in-time recovery (PITR).
+- Store master production secrets in cloud secret vaults (e.g. AWS Secrets Manager, GCP Secret Manager).
 
 ---
 

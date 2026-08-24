@@ -8,7 +8,7 @@ from typing import Tuple, Optional
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
-from app.models.user import User, Workspace, UserSession
+from app.models.user import User, Workspace, UserSession, EmailVerificationToken, PasswordResetToken
 from app.core.security import SecurityUtils
 from app.core.config import settings
 
@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 
 # In-memory login attempt tracking: normalized_email -> {"count": int, "locked_until": datetime}
 _login_attempts: dict = {}
+
+# In-memory resend verification rate-limiting: normalized_email -> list of timestamps
+_resend_verification_attempts: dict = {}
+
+# In-memory forgot password rate-limiting: normalized_email -> list of timestamps
+_forgot_password_attempts: dict = {}
 
 
 class AuthService:
@@ -73,6 +79,29 @@ class AuthService:
         _login_attempts.pop(normalized_email, None)
 
     @staticmethod
+    def _check_resend_throttle(normalized_email: str):
+        """
+        Rate limits resend verification requests to prevent email flooding (max 3 requests per 10 minutes).
+        """
+        now = datetime.now(timezone.utc)
+        window = timedelta(minutes=10)
+        max_attempts = 3
+
+        history = _resend_verification_attempts.setdefault(normalized_email, [])
+        # Filter timestamps within active sliding window
+        valid_history = [t for t in history if now - t < window]
+        _resend_verification_attempts[normalized_email] = valid_history
+
+        if len(valid_history) >= max_attempts:
+            logger.warning(f"Security Alert: Resend verification rate limit exceeded for '{normalized_email}'.")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many verification requests. Please wait a few minutes before requesting another email.",
+            )
+
+        valid_history.append(now)
+
+    @staticmethod
     def register_user(
         db: Session,
         full_name: str,
@@ -81,8 +110,11 @@ class AuthService:
         password: str,
     ) -> Tuple[User, Workspace, UserSession]:
         """
-        Creates a new User, associates an initial Workspace, and generates an active UserSession.
+        Creates a new User, associates an initial Workspace, issues a secure email verification token,
+        and generates an active UserSession.
         """
+        from app.services.email_service import EmailService
+
         normalized_email = SecurityUtils.normalize_email(email)
 
         # Check existing user
@@ -96,6 +128,11 @@ class AuthService:
 
         hashed_password = SecurityUtils.hash_password(password)
 
+        # Generate CSPRNG verification token
+        raw_verify_token = SecurityUtils.generate_session_token()
+        token_hash = SecurityUtils.hash_token(raw_verify_token)
+        verify_expires_at = datetime.now(timezone.utc) + timedelta(minutes=settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES)
+
         user = User(
             full_name=full_name.strip(),
             organization=organization.strip(),
@@ -103,8 +140,21 @@ class AuthService:
             password_hash=hashed_password,
             role="owner",
             is_active=True,
+            email_verified=False,
+            is_verified=False,
+            verification_token_hash=token_hash,
+            verification_token_expires_at=verify_expires_at,
         )
         db.add(user)
+        db.flush()
+
+        # Persist audit record in email_verification_tokens
+        token_record = EmailVerificationToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=verify_expires_at,
+        )
+        db.add(token_record)
         db.flush()
 
         workspace = Workspace(
@@ -121,7 +171,14 @@ class AuthService:
         db.refresh(workspace)
         db.refresh(session)
 
-        logger.info(f"Security: New user registered successfully: '{normalized_email}' (Workspace ID: {workspace.id})")
+        # Dispatch verification email via EmailService
+        EmailService.send_verification_email(
+            to_email=user.email,
+            verification_token=raw_verify_token,
+            full_name=user.full_name,
+        )
+
+        logger.info(f"Security: New user registered: '{normalized_email}'. Verification token generated and dispatched.")
         return user, workspace, session
 
     @staticmethod
@@ -266,22 +323,65 @@ class AuthService:
         return False
 
     @staticmethod
+    def _check_forgot_password_throttle(normalized_email: str):
+        """
+        Rate limits password reset requests to prevent email flooding (max 3 requests per 10 minutes).
+        """
+        now = datetime.now(timezone.utc)
+        window = timedelta(minutes=10)
+        max_attempts = 3
+
+        history = _forgot_password_attempts.setdefault(normalized_email, [])
+        valid_history = [t for t in history if now - t < window]
+        _forgot_password_attempts[normalized_email] = valid_history
+
+        if len(valid_history) >= max_attempts:
+            logger.warning(f"Security Alert: Forgot password rate limit exceeded for '{normalized_email}'.")
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many password reset requests. Please wait a few minutes before requesting another reset link.",
+            )
+
+        valid_history.append(now)
+
+    @staticmethod
     def request_password_reset(db: Session, email: str) -> bool:
         """
-        Generates cryptographically random reset token, stores SHA-256 hash in DB with 30-min expiry,
+        Generates cryptographically random reset token, stores SHA-256 hash in PasswordResetToken table
+        with configured expiry (default 30 min), invalidates prior active tokens, applies rate limiting,
         and dispatches email via EmailService.
         Always returns True to prevent user enumeration.
         """
         from app.services.email_service import EmailService
 
         normalized_email = SecurityUtils.normalize_email(email)
+
+        # Rate limiting check
+        AuthService._check_forgot_password_throttle(normalized_email)
+
         user = db.query(User).filter(User.email == normalized_email).first()
+        now = datetime.now(timezone.utc)
 
         if user and user.is_active:
+            # Invalidate previous active reset tokens for this user
+            db.query(PasswordResetToken).filter(
+                PasswordResetToken.user_id == user.id,
+                PasswordResetToken.used_at == None,
+            ).update({"used_at": now})
+
             raw_token = SecurityUtils.generate_session_token()
             token_hash = SecurityUtils.hash_token(raw_token)
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=30)
+            expires_at = now + timedelta(minutes=settings.PASSWORD_RESET_TOKEN_EXPIRE_MINUTES)
 
+            # Persist in dedicated password_reset_tokens table
+            reset_record = PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=expires_at,
+            )
+            db.add(reset_record)
+
+            # Also update User legacy columns for redundancy
             user.reset_token_hash = token_hash
             user.reset_token_expires_at = expires_at
             db.commit()
@@ -300,8 +400,8 @@ class AuthService:
     @staticmethod
     def reset_password(db: Session, raw_token: str, new_password: str) -> bool:
         """
-        Validates token hash and expiration, updates password hash, clears token,
-        and invalidates all existing sessions (Session Invalidation).
+        Validates token hash and expiration, updates password hash using PBKDF2-HMAC-SHA256,
+        marks token as used, and invalidates all existing sessions (Session Invalidation).
         """
         if not raw_token or not new_password:
             raise HTTPException(
@@ -309,30 +409,70 @@ class AuthService:
                 detail="Reset token and new password are required.",
             )
 
-        token_hash = SecurityUtils.hash_token(raw_token)
-        user = db.query(User).filter(User.reset_token_hash == token_hash).first()
+        if len(new_password) < 8 or len(new_password) > 128:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be between 8 and 128 characters in length.",
+            )
 
+        token_hash = SecurityUtils.hash_token(raw_token)
         now = datetime.now(timezone.utc)
-        if not user or not user.reset_token_expires_at:
+
+        # 1. Check PasswordResetToken table
+        token_record = (
+            db.query(PasswordResetToken)
+            .filter(PasswordResetToken.token_hash == token_hash)
+            .first()
+        )
+
+        user = None
+        if token_record:
+            if token_record.used_at is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="This password reset link has already been used. Please request a new one.",
+                )
+
+            token_exp = token_record.expires_at.replace(tzinfo=timezone.utc) if token_record.expires_at.tzinfo is None else token_record.expires_at
+            if token_exp < now:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Password reset link has expired. Please request a new one.",
+                )
+
+            user = db.query(User).filter(User.id == token_record.user_id).first()
+        else:
+            # Fallback to User table
+            user = db.query(User).filter(User.reset_token_hash == token_hash).first()
+            if not user or not user.reset_token_expires_at:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid or expired password reset link.",
+                )
+
+            user_exp = user.reset_token_expires_at.replace(tzinfo=timezone.utc) if user.reset_token_expires_at.tzinfo is None else user.reset_token_expires_at
+            if user_exp < now:
+                user.reset_token_hash = None
+                user.reset_token_expires_at = None
+                db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Password reset link has expired. Please request a new one.",
+                )
+
+        if not user or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired password reset link.",
             )
 
-        user_exp = user.reset_token_expires_at.replace(tzinfo=timezone.utc) if user.reset_token_expires_at.tzinfo is None else user.reset_token_expires_at
-        if user_exp < now:
-            user.reset_token_hash = None
-            user.reset_token_expires_at = None
-            db.commit()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password reset link has expired. Please request a new one.",
-            )
-
-        # Update password hash
+        # Update password hash using PBKDF2
         user.password_hash = SecurityUtils.hash_password(new_password)
         user.reset_token_hash = None
         user.reset_token_expires_at = None
+
+        if token_record:
+            token_record.used_at = now
 
         # Revoke all existing sessions for this user (Security best practice)
         db.query(UserSession).filter(UserSession.user_id == user.id).update({"is_revoked": True})
@@ -368,33 +508,149 @@ class AuthService:
         return True
 
     @staticmethod
-    def verify_email(db: Session, raw_token: str) -> bool:
+    def verify_email(db: Session, raw_token: str) -> dict:
         """
         Validates email verification token and marks user as verified.
+        Behavior:
+        1. Hash supplied token.
+        2. Find matching unused token in EmailVerificationToken (or fallback on User).
+        3. Verify expiry.
+        4. Verify associated user.
+        5. Mark user email_verified = true, is_verified = true.
+        6. Set email_verified_at.
+        7. Mark token as used (used_at = now).
+        8. Reject reuse if already used.
         """
+        if not raw_token:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Verification token is required.",
+            )
+
         token_hash = SecurityUtils.hash_token(raw_token)
-        user = db.query(User).filter(User.verification_token_hash == token_hash).first()
-
         now = datetime.now(timezone.utc)
-        if not user or not user.verification_token_expires_at:
+
+        # 1. Search EmailVerificationToken table
+        token_record = (
+            db.query(EmailVerificationToken)
+            .filter(EmailVerificationToken.token_hash == token_hash)
+            .first()
+        )
+
+        user = None
+        if token_record:
+            if token_record.used_at is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="This verification link has already been used.",
+                )
+
+            token_exp = token_record.expires_at.replace(tzinfo=timezone.utc) if token_record.expires_at.tzinfo is None else token_record.expires_at
+            if token_exp < now:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Verification link has expired. Please request a new one.",
+                )
+
+            user = db.query(User).filter(User.id == token_record.user_id).first()
+        else:
+            # Fallback to User table verification_token_hash
+            user = db.query(User).filter(User.verification_token_hash == token_hash).first()
+            if not user or not user.verification_token_expires_at:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid or expired email verification link.",
+                )
+
+            user_exp = user.verification_token_expires_at.replace(tzinfo=timezone.utc) if user.verification_token_expires_at.tzinfo is None else user.verification_token_expires_at
+            if user_exp < now:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Verification link has expired. Please request a new one.",
+                )
+
+        if not user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired email verification link.",
+                detail="Invalid verification link or user not found.",
             )
 
-        user_exp = user.verification_token_expires_at.replace(tzinfo=timezone.utc) if user.verification_token_expires_at.tzinfo is None else user.verification_token_expires_at
-        if user_exp < now:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Verification link has expired.",
-            )
+        # If already verified
+        if user.email_verified:
+            if token_record:
+                token_record.used_at = now
+            user.verification_token_hash = None
+            user.verification_token_expires_at = None
+            db.commit()
+            return {"message": "Email is already verified. You can sign in to your account.", "already_verified": True}
 
+        # Mark user as verified
+        user.email_verified = True
         user.is_verified = True
+        user.email_verified_at = now
         user.verification_token_hash = None
         user.verification_token_expires_at = None
-        db.commit()
 
-        logger.info(f"Security: Email address verified for user '{user.email}'")
+        if token_record:
+            token_record.used_at = now
+
+        db.commit()
+        logger.info(f"Security: Email address successfully verified for user '{user.email}'")
+        return {"message": "Your email address has been verified successfully. Your workspace is now active."}
+
+    @staticmethod
+    def resend_verification(db: Session, email: str) -> bool:
+        """
+        Resends email verification link.
+        Requirements:
+        - Rate limit requests.
+        - Prevent email flooding.
+        - Do not expose whether an email exists (generic response).
+        - Invalidate previous active verification tokens.
+        - Generate a new secure token and dispatch via EmailService.
+        """
+        from app.services.email_service import EmailService
+
+        normalized_email = SecurityUtils.normalize_email(email)
+
+        # Rate limiting check
+        AuthService._check_resend_throttle(normalized_email)
+
+        user = db.query(User).filter(User.email == normalized_email).first()
+        now = datetime.now(timezone.utc)
+
+        if user and not user.email_verified and user.is_active:
+            # 1. Invalidate previous active verification tokens for this user
+            db.query(EmailVerificationToken).filter(
+                EmailVerificationToken.user_id == user.id,
+                EmailVerificationToken.used_at == None,
+            ).update({"used_at": now})
+
+            # 2. Generate new token
+            raw_verify_token = SecurityUtils.generate_session_token()
+            token_hash = SecurityUtils.hash_token(raw_verify_token)
+            verify_expires_at = now + timedelta(minutes=settings.EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES)
+
+            user.verification_token_hash = token_hash
+            user.verification_token_expires_at = verify_expires_at
+
+            token_record = EmailVerificationToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=verify_expires_at,
+            )
+            db.add(token_record)
+            db.commit()
+
+            EmailService.send_verification_email(
+                to_email=user.email,
+                verification_token=raw_verify_token,
+                full_name=user.full_name,
+            )
+            logger.info(f"Security: New verification token issued and sent for '{normalized_email}'")
+        else:
+            logger.info(f"Security: Resend verification requested for verified/non-existent email '{normalized_email}'")
+
         return True
 
     @staticmethod

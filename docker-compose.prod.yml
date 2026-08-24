@@ -1,0 +1,92 @@
+# ==============================================================================
+# SPECra Production Multi-Container Orchestration
+# ==============================================================================
+version: '3.8'
+
+services:
+  # --- 1. PostgreSQL Relational Data Store ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: specra_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-deadlock}
+      POSTGRES_USER: ${POSTGRES_USER:-specra_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password must be set}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - specra_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-specra_app} -d ${POSTGRES_DB:-deadlock}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- 2. SPECra FastAPI Core Engine ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: specra_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-specra_app}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-deadlock}
+      AUTH_SECRET: ${AUTH_SECRET:?AUTH_SECRET must be set}
+      COOKIE_SECURE: "true"
+      ENABLE_HSTS: "true"
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://app.specra.io"]}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.7-flash}
+      SMTP_HOST: ${SMTP_HOST:-smtp-relay.brevo.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-no-reply@specra.io}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-SPECra Product Intelligence}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-https://app.specra.io}
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - specra_internal
+      - specra_ingress
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # --- 3. SPECra React / Vite Web Frontend ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: specra_frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${PORT:-80}:80"
+    networks:
+      - specra_ingress
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  specra_internal:
+    internal: true
+  specra_ingress:
